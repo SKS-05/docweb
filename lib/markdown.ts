@@ -53,25 +53,30 @@ const components = {
 
 // can be used for other pages like blogs, Guides etc
 async function parseMdx<Frontmatter>(rawMdx: string) {
-  return await compileMDX<Frontmatter>({
-    source: rawMdx,
-    options: {
-      parseFrontmatter: true,
-      mdxOptions: {
-        rehypePlugins: [
-          preProcess,
-          rehypeCodeTitles,
-          rehypeCodeTitlesWithLogo,
-          rehypePrism,
-          rehypeSlug,
-          rehypeAutolinkHeadings,
-          postProcess,
-        ],
-        remarkPlugins: [remarkGfm],
+  try {
+    return await compileMDX<Frontmatter>({
+      source: rawMdx,
+      options: {
+        parseFrontmatter: true,
+        mdxOptions: {
+          rehypePlugins: [
+            preProcess,
+            rehypeCodeTitles,
+            rehypeCodeTitlesWithLogo,
+            rehypePrism,
+            rehypeSlug,
+            rehypeAutolinkHeadings,
+            postProcess,
+          ],
+          remarkPlugins: [remarkGfm],
+        },
       },
-    },
-    components,
-  });
+      components,
+    });
+  } catch (error) {
+    console.error("Error parsing MDX:", error);
+    throw error;
+  }
 }
 
 // logic for docs
@@ -230,7 +235,8 @@ export async function getBlogForSlug(slug: string) {
   try {
     const rawMdx = await fs.readFile(blogFile, "utf-8");
     return await parseMdx<BlogMdxFrontmatter>(rawMdx);
-  } catch {
+  } catch (error) {
+    console.error(`Error getting blog for slug ${slug}:`, error);
     return undefined;
   }
 }

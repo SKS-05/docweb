@@ -6,12 +6,12 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "img.freepik.com/**",
+        hostname: "**",
       },
     ],
   },
-  // if used turbopack
-  // transpilePackages: ["next-mdx-remote"],
+  // Turn on transpilation for next-mdx-remote to ensure it uses the same React version
+  transpilePackages: ["next-mdx-remote"],
 };
 
 export default nextConfig;
