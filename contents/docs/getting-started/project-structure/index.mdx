@@ -1,85 +1,75 @@
 ---
 title: Project Structure
-description: This section provides an overview of Project Structure.
+description: This section provides an overview of the project structure.
 ---
 
 ## Project Structure Overview
 
-### app
+### src
 
-This folder contains the main application code for Next.js, managing layouts, routing, and specific content pages. It is organized to support both the `docs` and `blog` sections, with dedicated pages and layouts for each section.
+This folder contains the main application source code, including pages, components, and utility functions. It is structured to support scalable development with modularized sections.
 
 <Files
   items={[
     {
       type: "folder",
-      name: "app",
+      name: "src",
       isOpen: true,
       children: [
-        { type: "file", name: "page.tsx" },
-        { type: "file", name: "layout.tsx" },
+        { type: "file", name: "main.tsx" },
+        { type: "file", name: "index.tsx" },
         {
           type: "folder",
-          name: "blog",
+          name: "pages",
           children: [
-            { type: "file", name: "page.tsx" },
+            { type: "file", name: "home.tsx" },
+            { type: "file", name: "about.tsx" },
             {
               type: "folder",
-              name: "[slug]",
-              children: [{ type: "file", name: "page.tsx" }],
+              name: "blog",
+              children: [{ type: "file", name: "[slug].tsx" }],
             },
           ],
         },
         {
           type: "folder",
-          name: "docs",
-          children: [
-            { type: "file", name: "layout.tsx" },
-            { type: "file", name: "[[...slug]].tsx" },
-          ],
+          name: "layouts",
+          children: [{ type: "file", name: "main-layout.tsx" }],
         },
       ],
     },
   ]}
 />
 
-### components
+### ui-components
 
-This folder contains all reusable components used throughout the project. It’s structured to categorize components, making it easy to locate and manage UI elements, Markdown customizations, and navigation.
+This folder contains all reusable UI components used across the application, making it easy to manage design consistency and modular functionality.
 
 <Files
   items={[
     {
       type: "folder",
-      name: "components",
+      name: "ui-components",
       isOpen: true,
       children: [
+        { type: "file", name: "button.tsx" },
+        { type: "file", name: "card.tsx" },
         {
           type: "folder",
-          name: "ui",
-          isOpen: true,
-          children: [],
-        },
-        {
-          type: "folder",
-          name: "markdown",
-          isOpen: true,
+          name: "inputs",
           children: [
-            { type: "file", name: "note.tsx" },
-            { type: "file", name: "image.tsx" },
-            { type: "file", name: "table.tsx" },
+            { type: "file", name: "text-input.tsx" },
+            { type: "file", name: "checkbox.tsx" },
           ],
         },
-        { type: "file", name: "navbar.tsx" },
       ],
     },
   ]}
 />
 
-
 ### styles
 
-This folder contains global and component-specific CSS files, allowing for project-wide styling consistency and customizations.
+This folder contains all global and component-specific styling, ensuring consistency across the application with CSS or Tailwind configuration.
 
 <Files
   items={[
@@ -88,48 +78,38 @@ This folder contains global and component-specific CSS files, allowing for proje
       name: "styles",
       isOpen: true,
       children: [
-        { type: "file", name: "globals.css" },
-        { type: "file", name: "syntax.css" },
-        { type: "file", name: "overrides.css" },
+        { type: "file", name: "global.css" },
+        { type: "file", name: "theme.css" },
       ],
     },
   ]}
 />
 
+### content
 
-### contents
-
-This folder stores all Markdown content for the documentation and blog sections, with clear organization by content type. Each Markdown file represents a single piece of content, with frontmatter used for metadata.
+This folder holds all Markdown content used for static pages, documentation, or blogs. Each Markdown file represents a single page or article.
 
 <Files
   items={[
     {
       type: "folder",
-      name: "contents",
+      name: "content",
       isOpen: true,
       children: [
         {
           type: "folder",
           name: "docs",
-          isOpen: true,
           children: [
-            { type: "file", name: "getting-started.md" },
-            { type: "file", name: "api-reference.md" },
-            {
-              type: "folder",
-              name: "tutorials",
-              isOpen: true,
-              children: [{ type: "file", name: "tutorial-1.md" }],
-            },
+            { type: "file", name: "installation.md" },
+            { type: "file", name: "configuration.md" },
           ],
         },
         {
           type: "folder",
-          name: "blogs",
-          isOpen: true,
+          name: "blog",
           children: [
-            { type: "file", name: "intro-to-project.md" },
-            { type: "file", name: "dev-updates.md" },
+            { type: "file", name: "first-post.md" },
+            { type: "file", name: "changelog.md" },
           ],
         },
       ],
@@ -137,56 +117,49 @@ This folder stores all Markdown content for the documentation and blog sections,
   ]}
 />
 
+### assets
 
-### public
+This folder contains all static files such as images, icons, and fonts that are required in the application.
 
-This folder holds all static assets, such as images, videos, fonts, and icons. These files are directly accessible via URL, so it’s important to avoid sensitive or private content here.
 <Files
   items={[
     {
       type: "folder",
-      name: "public",
+      name: "assets",
       isOpen: true,
       children: [
         {
           type: "folder",
           name: "images",
-          isOpen: true,
           children: [
-            { type: "file", name: "logo.png" },
-            { type: "file", name: "banner.jpg" },
+            { type: "file", name: "logo.svg" },
+            { type: "file", name: "background.png" },
           ],
         },
         {
           type: "folder",
           name: "icons",
-          children: [],
-        },
-        {
-          type: "folder",
-          name: "videos",
-          children: [],
+          children: [{ type: "file", name: "menu.svg" }],
         },
       ],
     },
   ]}
 />
 
+### utils
 
-### lib
-
-This folder contains helper functions and utilities used across the application, such as Markdown parsing and routing logic. These utilities help keep the codebase clean and organized by separating out common functionality.
+This folder contains helper functions and reusable utilities that simplify common operations such as API requests, formatting, and validation.
 
 <Files
   items={[
     {
       type: "folder",
-      name: "lib",
+      name: "utils",
       isOpen: true,
       children: [
-        { type: "file", name: "markdown.ts" },
-        { type: "file", name: "routes-config.ts" },
-        { type: "file", name: "utils.tsx" },
+        { type: "file", name: "api.ts" },
+        { type: "file", name: "format.ts" },
+        { type: "file", name: "validators.ts" },
       ],
     },
   ]}
@@ -194,7 +167,8 @@ This folder contains helper functions and utilities used across the application,
 
 ### Additional
 
-- **`package.json`**: Contains metadata about the project, dependencies, and scripts for building and running the application.
-- **`tailwind.config.ts`**: Configures Tailwind CSS, allowing customization of theme colors, fonts, and responsive breakpoints specific to this project.
+- **`package.json`**: Defines project metadata, dependencies, and scripts for running and building the application.
+- **`vite.config.ts`**: Configuration file for Vite, specifying project settings and optimizations.
+- **`tsconfig.json`**: TypeScript configuration file that ensures proper compilation settings.
 
-This structure organizes your project in a way that supports scalability and maintainability, making it easier to navigate and work on different sections of the application.
+This project structure ensures modularity, maintainability, and scalability, making it easier to manage large-scale applications efficiently.
