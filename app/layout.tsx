@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/contexts/theme-provider";
+import { AuthProvider } from "@/components/contexts/auth-provider";
 import { Navbar } from "@/components/navbar";
 import { Space_Mono, Space_Grotesk } from "next/font/google";
 import { Footer } from "@/components/footer";
@@ -28,9 +29,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -50,11 +51,15 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Navbar />
-          <main className="sm:container mx-auto w-[90vw] h-auto scroll-smooth">
-            {children}
-          </main>
-          <Footer />
+          <AuthProvider>
+            <div className="relative flex min-h-screen flex-col">
+              <Navbar />
+              <main className="sm:container mx-auto w-[90vw] h-auto scroll-smooth">
+                {children}
+              </main>
+              <Footer />
+            </div>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

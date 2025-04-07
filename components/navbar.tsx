@@ -5,12 +5,10 @@ import Link from "next/link";
 import { SheetLeftbar } from "./leftbar";
 import AlgoliaSearch from "./algolia-search";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import supabase from "@/lib/supabase";
-import { User } from "@supabase/supabase-js";
 import { Logo } from "./logo";
 import { AlgoliaProps } from "@/types/algolia";
-import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { buttonVariants } from "@/components/ui/button";
 
 // Validate environment variables at startup
 const algolia_props: AlgoliaProps = {
@@ -20,65 +18,40 @@ const algolia_props: AlgoliaProps = {
 };
 
 export function Navbar() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
-  // Fetch logged-in user safely
   useEffect(() => {
-    let mounted = true;
-
-    const fetchUser = async () => {
-      try {
-        const { data, error: supabaseError } = await supabase.auth.getUser();
-        
-        if (supabaseError) {
-          throw supabaseError;
-        }
-        
-        if (mounted) {
-          setUser(data?.user || null);
-          setError(null);
-        }
-      } catch (err) {
-        if (mounted) {
-          // Handle error without using console.error
-          const errorMessage = err instanceof Error ? err.message : "Failed to fetch user data";
-          setError(errorMessage);
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
+    // Check login status
+    const checkLoginStatus = () => {
+      const loginStatus = localStorage.getItem('isLoggedIn') === 'true';
+      const email = localStorage.getItem('userEmail');
+      setIsLoggedIn(loginStatus);
+      setUserEmail(email);
     };
 
-    fetchUser();
+    // Check initially
+    checkLoginStatus();
+
+    // Add event listener for storage changes
+    window.addEventListener('storage', checkLoginStatus);
+
+    // Check every 1 second for changes
+    const interval = setInterval(checkLoginStatus, 1000);
 
     return () => {
-      mounted = false;
+      window.removeEventListener('storage', checkLoginStatus);
+      clearInterval(interval);
     };
   }, []);
 
-  // Handle logout safely
-  const handleLogout = async () => {
-    try {
-      setLoading(true);
-      const { error: supabaseError } = await supabase.auth.signOut();
-      
-      if (supabaseError) {
-        throw supabaseError;
-      }
-      
-      setUser(null);
-      router.push('/login');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to logout";
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+  const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userEmail');
+    setIsLoggedIn(false);
+    setUserEmail(null);
+    router.push('/');
   };
 
   return (
@@ -93,34 +66,30 @@ export function Navbar() {
           </div>
         </div>
 
-        <div className="flex items-center sm:justify-normal justify-between sm:gap-3 ml-1 sm:w-fit w-[90%]">
+        <div className="flex items-center gap-4">
           <AlgoliaSearch {...algolia_props} />
 
-          {error && (
-            <div className="text-red-500 text-sm" role="alert">
-              {error}
+          {isLoggedIn ? (
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground">
+                {userEmail}
+              </span>
+              <button 
+                onClick={handleLogout} 
+                className={buttonVariants({
+                  variant: "destructive",
+                  size: "default",
+                })}
+              >
+                Logout
+              </button>
             </div>
-          )}
-
-          {loading ? (
-            <div className="flex items-center gap-2" role="status" aria-label="Loading">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm text-gray-500">Loading...</span>
-            </div>
-          ) : user ? (
-            <button 
-              onClick={handleLogout} 
-              className="bg-red-500 text-white px-4 h-[40px] flex items-center justify-center rounded-md hover:bg-red-600 transition-colors"
-              aria-label="Logout"
-              disabled={loading}
-            >
-              Log Out
-            </button>
           ) : (
             <Link href="/login">
               <button 
-                className="bg-black text-white px-4 h-[40px] flex items-center justify-center rounded-md hover:bg-gray-800 transition-colors"
-                aria-label="Login"
+                className={buttonVariants({
+                  size: "default",
+                })}
               >
                 Login
               </button>
