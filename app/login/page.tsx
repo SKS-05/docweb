@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabase';
 import { PasswordInput } from '@/components/ui/password-input';
+import { cookies } from 'next/headers';
 
 // Admin email constant
 const ADMIN_EMAIL = 'kssinchana715@gmail.com';
@@ -45,9 +46,10 @@ export default function LoginPage() {
         return;
       }
 
-      // Store login state in localStorage
+      // Store login state in localStorage and cookie
       localStorage.setItem('userEmail', email);
       localStorage.setItem('isLoggedIn', 'true');
+      document.cookie = 'isLoggedIn=true; path=/';
       
       // Redirect based on user type and first_login status
       if (email === ADMIN_EMAIL) {
