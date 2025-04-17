@@ -9,12 +9,15 @@ import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     const checkLoginStatus = () => {
       const loginStatus = localStorage.getItem('isLoggedIn') === 'true';
+      const userEmail = localStorage.getItem('userEmail');
       setIsLoggedIn(loginStatus);
+      setIsAdmin(loginStatus && userEmail === 'kssinchana715@gmail.com');
     };
 
     // Check initial login status

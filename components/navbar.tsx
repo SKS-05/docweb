@@ -4,7 +4,7 @@ import { ModeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import { SheetLeftbar } from "./leftbar";
 import AlgoliaSearch from "./algolia-search";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Logo } from "./logo";
 import { AlgoliaProps } from "@/types/algolia";
 import { useEffect, useState } from "react";
@@ -19,6 +19,7 @@ const algolia_props: AlgoliaProps = {
 
 export function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
@@ -71,6 +72,17 @@ export function Navbar() {
 
           {isLoggedIn ? (
             <div className="flex items-center gap-4">
+              {userEmail === 'kssinchana715@gmail.com' && pathname === '/' && (
+                <Link
+                  href="/send-passwords"
+                  className={buttonVariants({
+                    variant: "outline",
+                    size: "default",
+                  })}
+                >
+                  Send Passwords
+                </Link>
+              )}
               <span className="text-sm text-muted-foreground">
                 {userEmail}
               </span>
