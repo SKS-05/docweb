@@ -13,8 +13,8 @@ import { buttonVariants } from "@/components/ui/button";
 // Validate environment variables at startup
 const algolia_props: AlgoliaProps = {
   appId: process.env.NEXT_PUBLIC_ALGOLIA_APP_ID ?? "",
-  indexName: process.env.NEXT_PUBLIC_ALGOLIA_INDEX ?? "",
-  apiKey: process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_API_KEY ?? "",
+  indexName: process.env.NEXT_PUBLIC_ALGOLIA_INDEX_NAME ?? "",
+  apiKey: process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY ?? "",
 };
 
 export function Navbar() {

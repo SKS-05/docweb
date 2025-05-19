@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabase';
-import { sendPasswordEmail } from '@/lib/email';
+import { sendPasswordEmail, resetSentEmailsTracking, removeDeletedEmailsFromTracking } from '@/lib/email';
 import { CSVUpload } from '@/components/ui/csv-upload';
 import { Button } from '@/components/ui/button';
 import { Filter, ChevronDown, ArrowUpDown, Search, RefreshCw } from 'lucide-react';
@@ -21,7 +21,8 @@ type User = {
 const ADMIN_EMAIL = 'kssinchana715@gmail.com';
 
 type FilterOption = 'firstlogin' | 'active' | 'all';
-type EmailFilterOption = 'already_sent' | 'sent' | 'failed' | 'all';
+type EmailFilterOption = 'already_sent' | 'sent' | 'failed' | 'processing' | 'new' | 'all';
+type EmailStatus = 'sent' | 'already_sent' | 'failed' | 'processing' | 'new';
 
 export default function SendPasswordsPage() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function SendPasswordsPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [emailStatus, setEmailStatus] = useState<{[key: string]: 'sent' | 'already_sent' | 'failed'}>({});
+  const [emailStatus, setEmailStatus] = useState<{[key: string]: EmailStatus}>({});
   const [importLoading, setImportLoading] = useState(false);
   const [uploadedEmails, setUploadedEmails] = useState<string[]>([]);
   const [filterOption, setFilterOption] = useState<FilterOption>('firstlogin');
@@ -45,9 +46,22 @@ export default function SendPasswordsPage() {
   const [hasImportedUsers, setHasImportedUsers] = useState(false);
   const [failedMessages, setFailedMessages] = useState<string[]>([]);
   const [checkingBounces, setCheckingBounces] = useState(false);
+  const [showFailedAlert, setShowFailedAlert] = useState(true);
 
   // Helper derived state
   const failedEmailsCount = Object.entries(emailStatus).filter(([_, status]) => status === 'failed').length;
+
+  // Auto-dismiss the failed emails alert after 3 seconds
+  useEffect(() => {
+    if (failedEmailsCount > 0) {
+      setShowFailedAlert(true);
+      const timer = setTimeout(() => {
+        setShowFailedAlert(false);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [failedEmailsCount]);
 
   // Add useEffect to auto-dismiss messages
   useEffect(() => {
@@ -185,6 +199,13 @@ export default function SendPasswordsPage() {
         return;
       }
 
+      // Set email status for new emails to 'new'
+      const updatedEmailStatus = { ...emailStatus };
+      newEmails.forEach(email => {
+        updatedEmailStatus[email] = 'new';
+      });
+      setEmailStatus(updatedEmailStatus);
+
       // Refresh user list
       await fetchUsers();
 
@@ -212,6 +233,13 @@ export default function SendPasswordsPage() {
           setError('Error removing uploaded users: ' + deleteError.message);
           return;
         }
+
+        // Clear email status for the canceled uploads
+        const updatedEmailStatus = { ...emailStatus };
+        uploadedEmails.forEach(email => {
+          delete updatedEmailStatus[email];
+        });
+        setEmailStatus(updatedEmailStatus);
 
         // Clear the uploaded emails
         setUploadedEmails([]);
@@ -245,6 +273,7 @@ export default function SendPasswordsPage() {
 
   // Check for bounced messages function
   const checkBouncedMessages = async () => {
+    setCheckingBounces(true);
     try {
       // Get all sent message IDs that might have failed
       const { data: sentMessages } = await supabase
@@ -253,6 +282,7 @@ export default function SendPasswordsPage() {
         .not('message_id', 'is', null);
       
       if (!sentMessages || sentMessages.length === 0) {
+        setCheckingBounces(false);
         return;
       }
 
@@ -293,9 +323,16 @@ export default function SendPasswordsPage() {
         
         // Refresh users
         await fetchUsers();
+      } else {
+        setSuccess('No bounced messages found.');
       }
     } catch (error) {
       console.error('Error checking bounced messages:', error);
+      setError('Failed to check for bounced messages: ' + 
+        (error instanceof Error ? error.message : 'Unknown error')
+      );
+    } finally {
+      setCheckingBounces(false);
     }
   };
 
@@ -304,8 +341,7 @@ export default function SendPasswordsPage() {
     setLoading(true);
     setError(null);
     setSuccess(null);
-    setEmailStatus({});
-
+    
     try {
       // Check for bounces first to ensure we have the latest status
       await checkBouncedMessages();
@@ -335,10 +371,24 @@ export default function SendPasswordsPage() {
         throw new Error('Failed to fetch current user data');
       }
 
+      // Only update 'new' users to 'processing', leave others as is
+      setEmailStatus(prev => {
+        const updated = { ...prev };
+        (currentUsers || []).forEach(user => {
+          if (
+            user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase() &&
+            prev[user.email] === 'new'
+          ) {
+            updated[user.email] = 'processing';
+          }
+        });
+        return updated;
+      });
+
       for (const user of currentUsers || []) {
         // Skip admin user
         if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) continue;
-
+        // DO NOT delete or clear the status here. Let it transition naturally.
         // Validate email format
         if (!isValidEmail(user.email)) {
           console.error(`Invalid email format: ${user.email}`);
@@ -405,7 +455,7 @@ export default function SendPasswordsPage() {
           }
 
           // Send email with new password
-          const { success, error: emailError, messageId } = await sendPasswordEmail(user.email, newPassword);
+          const { success, error: emailError, messageId, alreadySent } = await sendPasswordEmail(user.email, newPassword);
           
           if (success) {
             // Store the messageId for tracking and mark as sent
@@ -420,6 +470,11 @@ export default function SendPasswordsPage() {
 
             successCount++;
             setEmailStatus(prev => ({ ...prev, [user.email]: 'sent' }));
+          } else if (alreadySent) {
+            // Handle already sent case
+            console.log(`Email already sent to ${user.email}`);
+            skippedCount++;
+            setEmailStatus(prev => ({ ...prev, [user.email]: 'already_sent' }));
           } else {
             failureCount++;
             setEmailStatus(prev => ({ ...prev, [user.email]: 'failed' }));
@@ -495,23 +550,39 @@ export default function SendPasswordsPage() {
     }
   };
 
-  // Also modify handleResendEmails to check for bounces
+  // Modify handleResendEmails function
   const handleResendEmails = async () => {
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-    setEmailStatus({});
+    if (selectedUsers.size === 0) {
+      setError('No users selected for resending');
+      return;
+    }
 
+    setLoading(true);
+    setSuccess(null);
+    setError(null);
+    
+    let successCount = 0;
+    let failureCount = 0;
+    let skippedCount = 0;
+    
     try {
       // Check for bounces first
       await checkBouncedMessages();
       
-      let successCount = 0;
-      let failureCount = 0;
-
+      // Set all selected emails to 'processing' status
+      const processingStatus = Array.from(selectedUsers).reduce((acc, email) => {
+        acc[email] = 'processing';
+        return acc;
+      }, {} as {[key: string]: EmailStatus});
+      
+      setEmailStatus(prev => ({...prev, ...processingStatus}));
+      
       for (const email of selectedUsers) {
         const user = users.find(u => u.email === email);
         if (!user) continue;
+
+        // Reset the email tracking to allow resending to this email
+        await resetSentEmailsTracking(email);
 
         // Set a lock before sending email
         const { error: lockError } = await supabase
@@ -546,7 +617,7 @@ export default function SendPasswordsPage() {
           }
 
           // Send email with new password
-          const { success, error: emailError, messageId } = await sendPasswordEmail(email, newPassword);
+          const { success, error: emailError, messageId, alreadySent } = await sendPasswordEmail(email, newPassword);
           
           if (success) {
             await supabase
@@ -560,6 +631,11 @@ export default function SendPasswordsPage() {
 
             successCount++;
             setEmailStatus(prev => ({ ...prev, [email]: 'sent' }));
+          } else if (alreadySent) {
+            // This should not happen now since we reset tracking, but handle it just in case
+            console.error(`Email still marked as already sent to ${email} despite tracking reset`);
+            skippedCount++;
+            setEmailStatus(prev => ({ ...prev, [email]: 'already_sent' }));
           } else {
             console.error(`Failed to send email to ${email}:`, emailError);
             setEmailStatus(prev => ({ ...prev, [email]: 'failed' }));
@@ -611,7 +687,7 @@ export default function SendPasswordsPage() {
     }
   };
 
-  // Filter and sort users
+  // Filter and sort users - updated to sort alphabetically by default
   const sortedAndFilteredUsers = users
     .filter(user => {
       // First apply search filter
@@ -637,10 +713,20 @@ export default function SendPasswordsPage() {
         if (emailFilterOption === 'already_sent' && status !== 'already_sent') return false;
         if (emailFilterOption === 'sent' && status !== 'sent') return false;
         if (emailFilterOption === 'failed' && status !== 'failed') return false;
+        if (emailFilterOption === 'processing' && status !== 'processing') return false;
+        if (emailFilterOption === 'new' && status !== 'new') return false;
       }
 
       // Return true only if both conditions are met
       return statusMatch && emailStatusMatch;
+    })
+    // Sort alphabetically by email
+    .sort((a, b) => {
+      const aStatus = emailStatus[a.email];
+      const bStatus = emailStatus[b.email];
+      if (aStatus === 'new' && bStatus !== 'new') return -1;
+      if (aStatus !== 'new' && bStatus === 'new') return 1;
+      return a.email.localeCompare(b.email);
     });
 
   // Add new handlers for selection
@@ -664,15 +750,20 @@ export default function SendPasswordsPage() {
 
   const handleDeleteUsers = async () => {
     try {
+      const emailsToDelete = Array.from(selectedUsers);
+      
       const { error: deleteError } = await supabase
         .from('docs')
         .delete()
-        .in('email', Array.from(selectedUsers));
+        .in('email', emailsToDelete);
 
       if (deleteError) {
         setError('Error deleting users: ' + deleteError.message);
         return;
       }
+
+      // Remove deleted emails from tracking to ensure they can receive emails if re-added
+      await removeDeletedEmailsFromTracking(emailsToDelete);
 
       await fetchUsers();
       setSuccess(`Successfully deleted ${selectedUsers.size} users`);
@@ -739,6 +830,74 @@ export default function SendPasswordsPage() {
           .alert-animate {
             animation: fadeOut 0.5s ease-out 2.5s forwards;
           }
+
+          @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+          }
+
+          .processing-animate {
+            animation: pulse 1.5s infinite;
+          }
+
+          /* Progress bar animation */
+          .loading-bar {
+            position: relative;
+            display: inline-block;
+            width: 80px;
+            height: 14px;
+            background-color: rgba(255, 248, 225, 0.3);
+            border-radius: 7px;
+            overflow: hidden;
+          }
+
+          .loading-bar::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 30%;
+            background-color: #f59e0b;
+            animation: loading 1.5s infinite ease-in-out;
+            border-radius: 7px;
+          }
+
+          @keyframes loading {
+            0% { left: -30%; }
+            100% { left: 100%; }
+          }
+          
+          /* Processing tag with animated background */
+          .processing-tag {
+            position: relative;
+            overflow: hidden;
+            background-color: rgba(255, 236, 153, 0.4);
+            color: #B45309;
+            z-index: 1;
+          }
+          
+          .processing-tag::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+              rgba(255, 236, 153, 0.1), 
+              rgba(255, 236, 153, 0.6), 
+              rgba(255, 236, 153, 0.1)
+            );
+            z-index: -1;
+            animation: slide 1.5s infinite linear;
+          }
+          
+          @keyframes slide {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(50%); }
+          }
         `}
       </style>
       <div className="bg-card p-8 rounded-lg shadow-lg border border-border">
@@ -755,16 +914,18 @@ export default function SendPasswordsPage() {
               shouldReset={shouldResetUpload}
             />
           </div>
-          <button
-            onClick={sendPasswords}
-            disabled={loading || !hasImportedUsers || !users.some(user => !user.email_sent)}
-            className="bg-primary text-primary-foreground py-2 px-4 rounded-lg hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed h-10 whitespace-nowrap"
-            title={!hasImportedUsers ? "Import users from CSV first" :
-                   !users.some(user => !user.email_sent) ? "All users have already received emails" :
-                   "Generate and send passwords to new users"}
-          >
-            {loading ? 'Processing...' : 'Generate & Send Passwords'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={sendPasswords}
+              disabled={loading || !hasImportedUsers || !users.some(user => !user.email_sent)}
+              className="bg-primary text-primary-foreground py-2 px-4 rounded-lg hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed h-10 whitespace-nowrap"
+              title={!hasImportedUsers ? "Import users from CSV first" :
+                     !users.some(user => !user.email_sent) ? "All users have already received emails" :
+                     "Generate and send passwords to new users"}
+            >
+              {loading ? 'Processing...' : 'Generate & Send Passwords'}
+            </button>
+          </div>
         </div>
 
         <div className="mb-6">
@@ -832,8 +993,8 @@ export default function SendPasswordsPage() {
           )}
 
           {/* Add helper text for failed emails */}
-          {failedEmailsCount > 0 && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          {failedEmailsCount > 0 && showFailedAlert && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg alert-animate">
               <div className="flex items-center gap-2 text-red-700">
                 <span className="text-sm">
                   {failedEmailsCount} email{failedEmailsCount !== 1 ? 's' : ''} failed to send. 
@@ -963,6 +1124,18 @@ export default function SendPasswordsPage() {
                                 </button>
                                 <button
                                   className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted ${
+                                    emailFilterOption === 'processing' ? 'bg-muted' : ''
+                                  }`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEmailFilterOption('processing');
+                                    setIsEmailFilterOpen(false);
+                                  }}
+                                >
+                                  Processing
+                                </button>
+                                <button
+                                  className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted ${
                                     emailFilterOption === 'failed' ? 'bg-muted' : ''
                                   }`}
                                   onClick={(e) => {
@@ -972,6 +1145,18 @@ export default function SendPasswordsPage() {
                                   }}
                                 >
                                   Failed
+                                </button>
+                                <button
+                                  className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted ${
+                                    emailFilterOption === 'new' ? 'bg-muted' : ''
+                                  }`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEmailFilterOption('new');
+                                    setIsEmailFilterOpen(false);
+                                  }}
+                                >
+                                  New
                                 </button>
                                 <button
                                   className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted ${
@@ -1023,19 +1208,29 @@ export default function SendPasswordsPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           {emailStatus[user.email] && (
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              emailStatus[user.email] === 'sent' 
-                                ? 'bg-green-100 text-green-800'
-                                : emailStatus[user.email] === 'already_sent'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {emailStatus[user.email] === 'sent' 
-                                ? 'Email Sent' 
-                                : emailStatus[user.email] === 'already_sent'
-                                ? 'Already Sent'
-                                : 'Failed to Send'}
-                            </span>
+                            emailStatus[user.email] === 'processing' ? (
+                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full processing-tag">
+                                Processing...
+                              </span>
+                            ) : emailStatus[user.email] === 'new' ? (
+                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 border border-yellow-300">
+                                New
+                              </span>
+                            ) : (
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                emailStatus[user.email] === 'sent' 
+                                  ? 'bg-green-100 text-green-800'
+                                  : emailStatus[user.email] === 'already_sent'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}>
+                                {emailStatus[user.email] === 'sent' 
+                                  ? 'Email Sent' 
+                                  : emailStatus[user.email] === 'already_sent'
+                                  ? 'Already Sent'
+                                  : 'Failed to Send'}
+                              </span>
+                            )
                           )}
                         </td>
                       </tr>

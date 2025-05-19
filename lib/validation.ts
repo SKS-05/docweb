@@ -1,64 +1,46 @@
 /**
- * Validation utilities for the application
+ * Validation utilities for email and other fields
  */
 
 /**
- * Validates an email address format
- * @param email The email address to validate
- * @returns True if the email is in a valid format, false otherwise
+ * Validates email format using RFC 5322 compliant regex
+ * @param email Email address to validate
+ * @returns Boolean indicating if email format is valid
  */
 export function validateEmail(email: string): boolean {
-  if (!email) return false;
-  
-  // RFC 5322 compliant email regex pattern
-  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-  
+  // RFC 5322 compliant email regex
+  const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
   return emailRegex.test(email);
 }
 
 /**
- * Validates a password strength
- * @param password The password to validate
- * @returns An object with validation result and optional error message
+ * Check if a string is empty or only whitespace
+ * @param value String to check
+ * @returns Boolean indicating if the string is empty
  */
-export function validatePassword(password: string): { valid: boolean; message?: string } {
-  if (!password) {
-    return { valid: false, message: 'Password is required' };
-  }
-  
+export function isEmpty(value: string): boolean {
+  return value.trim().length === 0;
+}
+
+/**
+ * Validates password strength
+ * @param password Password to validate
+ * @returns Object with validation result and optional error message
+ */
+export function validatePassword(password: string): { isValid: boolean; message?: string } {
   if (password.length < 8) {
-    return { valid: false, message: 'Password must be at least 8 characters long' };
+    return { isValid: false, message: "Password must be at least 8 characters long" };
   }
   
   // Check for at least one number
   if (!/\d/.test(password)) {
-    return { valid: false, message: 'Password must contain at least one number' };
+    return { isValid: false, message: "Password must contain at least one number" };
   }
   
   // Check for at least one uppercase letter
   if (!/[A-Z]/.test(password)) {
-    return { valid: false, message: 'Password must contain at least one uppercase letter' };
+    return { isValid: false, message: "Password must contain at least one uppercase letter" };
   }
   
-  // Check for at least one lowercase letter
-  if (!/[a-z]/.test(password)) {
-    return { valid: false, message: 'Password must contain at least one lowercase letter' };
-  }
-  
-  // Check for at least one special character
-  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
-    return { valid: false, message: 'Password must contain at least one special character' };
-  }
-  
-  return { valid: true };
-}
-
-/**
- * Checks if two passwords match
- * @param password The original password
- * @param confirmPassword The confirmation password
- * @returns True if the passwords match, false otherwise
- */
-export function passwordsMatch(password: string, confirmPassword: string): boolean {
-  return password === confirmPassword;
+  return { isValid: true };
 } 

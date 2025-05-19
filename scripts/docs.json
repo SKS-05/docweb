@@ -1,0 +1,16 @@
+[
+    {
+      "id": "1",
+      "title": "Quick Start Guide",
+      "url": "/docs/quick-start",
+      "content": "How to get started with the project...",
+      "order": 1
+    },
+    {
+      "id": "2",
+      "title": "Project Structure",
+      "url": "/docs/structure",
+      "content": "Explanation of the project structure...",
+      "order": 2
+    }
+  ]
