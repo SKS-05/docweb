@@ -17,7 +17,7 @@ export default function Home() {
       const loginStatus = localStorage.getItem('isLoggedIn') === 'true';
       const userEmail = localStorage.getItem('userEmail');
       setIsLoggedIn(loginStatus);
-      setIsAdmin(loginStatus && userEmail === 'kssinchana715@gmail.com');
+      setIsAdmin(loginStatus && userEmail === 'sinchks94@gmail.com');
     };
 
     // Check initial login status

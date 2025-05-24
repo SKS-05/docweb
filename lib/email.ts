@@ -13,7 +13,7 @@ import fs from 'fs';
 const dnsResolveMx = promisify(dns.resolveMx);
 
 // Admin email configuration
-const adminEmail = 'kssinchana715@gmail.com';
+const adminEmail = 'sinchks94@gmail.com';
 // App password for Gmail (replace with your actual app password)
 const adminPassword = 'wxey mngw cnwa lcso';
 const APP_NAME = 'AriaAuth';

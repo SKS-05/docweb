@@ -13,7 +13,7 @@ export default function Note({
   type = "note",
 }: NoteProps) {
   const noteClassNames = clsx({
-    "dark:bg-stone-950/25 bg-stone-50": type == "note",
+    "dark:bg-yellow-950/25 bg-yellow-100 border-yellow-200 dark:border-yellow-900": type == "note",
     "dark:bg-red-950 bg-red-100 border-red-200 dark:border-red-900":
       type === "danger",
     "dark:bg-orange-950 bg-orange-100 border-orange-200 dark:border-orange-900":

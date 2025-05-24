@@ -7,7 +7,7 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { cookies } from 'next/headers';
 
 // Admin email constant
-const ADMIN_EMAIL = 'kssinchana715@gmail.com';
+const ADMIN_EMAIL = 'sinchks94@gmail.com';
 
 export default function LoginPage() {
   const router = useRouter();

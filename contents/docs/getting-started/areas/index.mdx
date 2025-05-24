@@ -1,0 +1,284 @@
+# Areas
+
+# Areas Master Database Documentation
+
+## Overview
+
+The Areas Master Database is a core component of Seribro, designed to organize and categorize all notes, web clips, tasks, projects, goals and habits. This database serves as a comprehensive structure for managing different aspects of life, work, or any other categorization needed.
+
+## Key Features
+
+### Integration with Other Databases
+
+The Areas Master Database is closely integrated with other core databases in the Kriyatus system:
+
+- Tasks Master Database: Through the Tasks and Pulling Task relations, connecting areas to specific tasks and actions.
+- Habits Database: Via the Habits relation, linking areas to relevant habits or routines.
+- Notes Master Database: Through the Notes relation, connecting areas to relevant information and documentation.
+
+### Hierarchical Structure
+
+The database supports a hierarchical structure through the Root Area and Sub Area relations. This allows for the creation of complex organizational structures with main areas, sub-areas, and even further nested levels of categorization.
+
+## Database Schema
+
+The Areas Master Database includes the following properties:
+
+### 1. Name (Title Property)
+
+This is the primary identifier for each area entry. It represents the name or title of the area, project, or topic.
+
+### 2. Maslow's Hierarchy (Select Property)
+
+This property categorizes the area according to Maslow's Hierarchy of Needs. Options include:
+
+- Transcendence needs
+- Self-actualization
+- Aesthetic needs
+- Cognitive needs
+- Esteem needs
+- Love and Social needs
+- Safety needs
+- Physiological needs
+
+<aside>
+💡
+
+Nearly every area or category of your life has a place in Maslow's Hierarchy of Needs based on what you get out of the activity.  We recommend this categorization because it help you understand your goals more clearly. 
+
+If you haven't come across Maslow's Hierarchy of Needs before, we strongly recommend that you read about it. Try this Wikipedia entry:
+
+https://en.wikipedia.org/wiki/Maslow%27s_hierarchy_of_needs.
+
+</aside>
+
+### 3. Processed (Checkbox Property)
+
+Indicates whether the entry has been reviewed or acted upon. When unchecked new Areas remain in the Inbox view. Make sure to assign all relevant properties before checking off this property. 
+
+### 4. Favourites (Checkbox Property)
+
+Allows users to mark important or frequently accessed areas.
+
+### 5. Archived (Checkbox Property)
+
+Used to remove areas from active view without deletion.
+
+### 6. Root Area (Relation Property)
+
+Links the current area to a parent or higher-level area within the same database. This is a many-to-one relation, allowing for hierarchical organization of areas.
+
+### 7. Sub Area (Relation Property)
+
+The inverse of Root Area, showing which areas are nested under the current one. This is a one-to-many relation, allowing multiple sub-areas to be associated with a root area.
+
+### 8. Notes (Relation Property)
+
+Links the area to related notes in the Notes Master Database. This is a one-to-many relation, allowing multiple notes to be associated with an area. The synced property name in the Notes Master database is "Area".
+
+### 9. Tasks (Relation Property)
+
+Links the area to related tasks in the Tasks Master Database. This is a one-to-many relation, allowing multiple tasks to be associated with an area. The synced property name in the Tasks Master database is "Area".
+
+### 10. Habits (Relation Property)
+
+Connects the area to related habits in the Habits Database. This is a one-to-many relation, allowing multiple habits to be associated with an area. The synced property name in the Habits Master database is "Area".
+
+### 11. Last edited time (Last Edited Time Property)
+
+Automatically updates when the area entry is modified.
+
+### 12. Edited (Formula Property)
+
+A formula property used to show the time passed since the Area was last edited in a neat way. It is calculated using the Last edited time property mentioned above. So do not delete that property. If you change its name, you will have to change it in the formula as well if you want this property to work. 
+
+Following is the Notion formula of this property:
+
+```jsx
+let(
+    lastEdited, prop("Last edited time"), /* Store the last edited time property in a variable */
+    
+    let(
+        now, now(), /* Get the current time */
+        
+        let(
+            years, dateBetween(now, lastEdited, "years"), /* Calculate the difference in years */
+            
+            let(
+                months, dateBetween(now, lastEdited, "months"), /* Calculate the difference in months */
+                
+                let(
+                    days, dateBetween(now, lastEdited, "days"), /* Calculate the difference in days */
+                    
+                    let(
+                        monthsRemaining, dateBetween(dateSubtract(now, years, "years"), lastEdited, "months"), /* Calculate remaining months after full years */
+                        
+                        let(
+                            daysRemaining, dateBetween(dateSubtract(now, months, "months"), lastEdited, "days"), /* Calculate remaining days after full months */
+                                
+                            if(
+                                dateBetween(now, lastEdited, "years") < 1, /* Check if less than a year */
+                                
+                                if(
+                                    dateBetween(now, lastEdited, "months") < 1, /* Check if less than a month */
+                                    format(days) + "d", /* Output days */
+                                    
+                                    format(months) + "m, " + format(daysRemaining) + "d" /* Output months and remaining days */
+                                ),
+                                
+                                format(years) + "y, " + format(monthsRemaining) + "m, " + format(daysRemaining) + "d" /* Output years, remaining months, and days */
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    )
+).style("c","b","blue","blue_background") /* Apply styles to the output */
+```
+
+### 13. Date Created (Created Time Property)
+
+Automatically records when the area entry was created.
+
+## 14. Files & Media
+
+Allows adding files as attachment to any entry. For a free account, the upload size is limited to 5MB.
+
+## Database Views
+
+The Areas Master Database includes two pre-configured views:
+
+1. All Areas: This view likely displays all active (non-archived) areas in the database. 
+2. Archived Areas: This view shows archived areas.
+
+## Best Practices
+
+- Use the Maslow's Hierarchy property to align areas with personal development goals.
+- Utilize the Favourites property to quickly access frequently used or important areas.
+- Regularly review and update the hierarchical structure using Root Area and Sub Area relations to maintain an organized system.
+- Use the Archived property to keep the active views clutter-free without losing historical data.
+- Periodically review Last edited time to identify areas that may need attention or updating.
+
+# Area Template
+
+## Overview
+
+The Area Template acts as the default template for areas in the area master database. It has a predefined structure that utilizes the full potential of all the relation properties associated with an area.
+
+## Template Structure
+
+### Details Panel
+
+All area properties are located in the Details Side Panel that can be accessed by clicking the Panel button on the top right corner of the page ("view details" alt text)  or clicking the 'View details' button below the title of the page. The Files and Media property appears separately for quick access.
+
+### New Entry Buttons
+
+Five buttons - New Note, New Task, New Project, New Goal and New Sub Area when clicked will create entries in relevant databases and show up in the linked databases within this template. They will be automatically linked to the current area using relevant relation properties.
+
+### Callout Block
+
+This section can be used to give a quick description of the task.
+
+### Linked Databases
+
+### →1. Sub Areas
+
+- Purpose: Shows all areas that are children of current instance of the Goal template
+- Layout: Gallery; Card preview: Page Cover; Small card size.
+- Visible Properties: Name
+- Filter: Root Area contains current instance of Goal Template & Archived is unchecked.
+- Sort: Descending Last edited time.
+- Group: None
+
+### → 2. Goals, Projects & Tasks
+
+- Purpose: Shows all goals, projects and tasks that are children of current instance of the Goal template
+- Layout: Table
+- Visible Properties: Name, Status, Date, Processed & Edited
+- Filter: Type is [Goal/Project/Task], Archived is unchecked & Parent Task contains current instance of Area Template
+    - Optional filter: Date
+- Sort: Ascending Date property
+- Group: None
+
+### →3. Notes & Web Clips
+
+- Purpose: Shows all notes, web clips and pulled notes that are linked to current instance of the Area template
+- Layout: List
+- Visible Properties: Name, [Type/URL], Processed & Created
+- Filter: URL is [empty/not empty], Archived is unchecked, Task & Root Task contains current instance of Task Template
+    - For Pulled Notes: Pulling Task contains current instance of Task Template
+- Sort: Descending Last edited time
+- Group: [None/ By Domain names in alphabetical order]
+
+# Areas Page
+
+### Overview
+
+The Areas page serves as a simple dashboard for managing entries in the Areas Master Database using a couple of database views.
+
+## Page Structure
+
+### New Area Button
+
+Placed on top of the page, this button lets you quickly create a new area entry.
+
+## →Linked Databases
+
+### 1. Areas Inbox
+
+- Purpose: Shows new or unprocessed areas
+- Layout: Table
+- Visible Properties: Name, Processed, Maslow's Hierarchy & Root Area
+- Filter: Type is Task, Archived is unchecked & Processed is unchecked
+- Sort: Descending Created time
+- Group: None
+
+### 2. Recent Areas
+
+- Purpose:  Shows the entry that was edited most recently
+- Layout: List
+- Visible Properties: Name, Favorite & Edited
+- Filter: Last edited time is on or after one month ago & Archived is unchecked
+- Sort: Descending Created time
+- Group: None
+
+### 3. Favourite Areas
+
+- Purpose:  Shows areas that have been marked as favourite.
+- Layout: Gallery; Card preview: Page Cover; Small card size.
+- Visible Properties: Name
+- Filter: Favourite is checked & Archived is unchecked
+- Sort: Descending Created time
+- Group: None
+
+### 4. All Areas
+
+- Purpose:  Shows all unarchived areas in the Areas Master Database
+- Layout: Table
+- Visible Properties: Name, Maslow's Hierarchy, Root Area, Favourite, Notes, Tasks, Archived & Edited
+- Filter: Archived is unchecked
+- Sort: Descending Created time
+- Group: None
+
+### →By Root Area
+
+- Purpose:  Shows all unarchived areas grouped by root area
+- Layout: Gallery; Card preview: Page Cover; Small card size.
+- Visible Properties: Name
+- Filter: Archived is unchecked
+- Sort: Descending Created time
+- Group: By Root Area; Alphabetical Sorting
+
+### →Archived Areas
+
+- Purpose:  Shows all archived areas in the Areas Master Database
+- Layout: Table
+- Visible Properties: Name, Maslow's Hierarchy, Root Area, Favourite, Notes, Tasks, Archived & Edited
+- Filter: Archived is checked
+- Sort: Descending Last edited time
+- Group: None
+
+## Conclusion
+
+The Areas Master Database serves as a versatile and powerful tool for organizing various aspects of life, work, or any other categorization needed within the Seribro system. Its integration with other databases, hierarchical structure, and thoughtful use of properties allows for a highly customizable and effective organizational solution that can adapt to complex information hierarchies and task relationships.

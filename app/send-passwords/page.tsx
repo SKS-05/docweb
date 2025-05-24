@@ -18,7 +18,7 @@ type User = {
 };
 
 // Admin email constant
-const ADMIN_EMAIL = 'kssinchana715@gmail.com';
+const ADMIN_EMAIL = 'sinchks94@gmail.com';
 
 type FilterOption = 'firstlogin' | 'active' | 'all';
 type EmailFilterOption = 'already_sent' | 'sent' | 'failed' | 'processing' | 'new' | 'all';
