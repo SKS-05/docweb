@@ -1,0 +1,112 @@
+# Wins
+
+# Wins Master Database Documentation
+
+## Overview
+
+The Wins Master Database is a core component of the Seribro system in Notion, designed to capture and track various achievements, successes, and positive outcomes. This database serves as a comprehensive system for recording and celebrating wins across different aspects of work or personal life.
+
+## Database Schema
+
+The Wins Master Database includes the following properties:
+
+### 1. Name (Title Property)
+
+This is the primary identifier for each win entry. It should contain a brief, descriptive title of the achievement or success.
+
+### 2. Goal (Relation Property)
+
+This property creates a relation to a Goal in the Task Master Database. It allows users to link each win to a specific goal, providing context and showing progress towards larger objectives. The is a one-to-one relationship. The synced property name in the Tasks Master Database is "Win".
+
+### 3. Area (Rollup Property)
+
+Shows the Area associated with the related goal using rollup.
+
+### 4. Archived (Checkbox Property)
+
+Used to remove entries from any of the views without deletion.
+
+### 5. Favorite (Checkbox Property)
+
+Enables you to mark Wins that are important to you. They will show up in the Favorite view of the Wins page.
+
+### 6. Files & Media
+
+Allows adding files as attachment to any entry. For a free account, the upload size is limited to 5MB.
+
+### 7. Created (Created Time Property)
+
+Automatically records when the win entry was created in the database. This helps in tracking when wins are being logged and can be useful for analyzing patterns over time.
+
+## Database Views
+
+The Wins Master Database includes two pre-configured views:
+
+1. All Wins: Shows all unarchived entries in the database
+2. Archived Wins: Shows all archived entries.
+
+## Best Practices for Using the Wins Master Database
+
+1. Consistent Naming: Use clear, concise titles in the Name property that capture the essence of the win. This makes it easier to scan and understand achievements at a glance.
+2. Goal Alignment: Utilize the Goal relation property to connect wins to specific objectives. This helps in tracking progress and understanding which areas are seeing the most success.
+3. Media Attachment: Upload an image using the Files & Media property to each entry so that it can remind you of your success. This image will show up in the gallery view of the Wins page.
+4. Regular Review: Schedule regular reviews of the Wins Master Database. This can boost morale, inform strategy, and help in identifying areas of strength and opportunities for improvement.
+
+# Wins Page
+
+### Overview
+
+The "Wins" page is essentially a trophy shelf - dedicated to tracking and displaying your various achievements or wins.
+
+## Page Structure
+
+<Note>
+The Wins page and the Dashboard page does not have a button to quickly add new Win entry because we believe that every new achievement demands that you reflect, even for a moment, on how far you've come. So, we encourage you to keep coming back to your trophy shelf on the Wins page every time you want to add another achievement.
+
+</Note>
+
+## →Linked Databases
+
+### 1. Trophy Shelf
+
+- Purpose: Shows all active entries in the Wins Master Database
+- Layout: Gallery; Card preview: Files & Media; Fit Image enabled; Small card size
+- Visible property: Name
+- Filter: Archived is unchecked
+    - Optional Filter: Area
+- Sort: Descending Created time.
+- Group: None
+
+### 2. Favorites
+
+- Purpose: Shows all favorited entries in the Wins Master Database
+- Layout: Gallery; Card preview: Files & Media; Fit Image enabled; Small card size
+- Visible property: Name
+- Filter: Archived is unchecked
+    - Optional Filter: Area
+- Sort: Descending Created time.
+- Group: None
+
+### 3. All Wins
+
+- Purpose: Shows all unarchived entries
+- Layout: Table
+- Visible property: Name, Goal, Area, Files & Media, Archived & Created time
+- Filter: Archived is unchecked
+    - Optional Filter: Area
+- Sort: Descending Created time.
+- Group: None
+
+### 4. Archived Wins
+
+- Purpose: Shows all archived entries
+- Layout: Table
+- Visible property: Name, Goal, Area, Files & Media, Archived & Created time
+- Filter: Archived is checked
+    - Optional Filter: Area
+- Sort: Descending Created time.
+- Group: None
+
+## Conclusion
+
+The Wins Master Database serves as a powerful tool for tracking and celebrating successes within the Seribro workspace. By consistently logging wins, aligning them with goals, and utilizing the flexible views provided, users can gain valuable insights into their progress and achievements. Regular use and review of this database can contribute to a positive, goal-oriented culture and inform strategic decision-making.

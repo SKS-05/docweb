@@ -1,0 +1,375 @@
+# Travel
+
+# Travel Master Database Documentation
+
+## Overview
+
+The Travel Master Database is a system designed to track and manage travel-related information. It serves as a central repository for recording various types of travel destinations, plans, and experiences.
+
+## Database Schema
+
+The Travel Master Database includes the following properties:
+
+### 1. Name (Title Property)
+
+This is the primary identifier with the name of the destination.
+
+### 2. Type (Select Property)
+
+Categorises the travel entry into one of three types:
+
+- Site
+- City
+- Country
+
+### 3. Budget (Number Property)
+
+Records the estimated or actual budget for the travel entry. This property is formatted in Indian Rupees (₹).
+
+### 4. Date Property
+
+Captures the date range of travel from departure to return.
+
+### 5. Rating (Select Property)
+
+Allows for rating the travel experience on a scale of 1 to 5 stars.
+
+### 6. Status (Status Property)
+
+Tracks the current status of the travel entry. Options are organized into categories:
+
+To-do:
+
+- Wishlist
+- Planning
+
+In progress:
+
+- Visiting
+
+Complete:
+
+- Visited
+
+### 7. Continent (Select Property)
+
+Categorizes the travel entries by continents.
+
+### 8. Child Location (Relation Property)
+
+Creates a relation to other entries within the same database, representing sub-locations. This is a many-to-one relation, allowing multiple child entries to be associated with a parent entry. The synced property name in the related entries is "Parent".
+
+<Note>
+By design, City is supposed to be a child of a Country and  Site is supposed to be child of a City. City can also be used for Towns & Villages.
+
+**Country > City > Site**
+</Note>
+
+### 9. Parent Location (Relation Property)
+
+The inverse of the Child relation, linking to a parent entry within the same database. This is a one-to-many relation, allowing each entry to have a single parent. The synced property name in the related entries is "Child".
+
+### 10. Root Location (Rollup Property)
+
+Shows the parent of the already linked parent entry using rollup.
+
+### 11. Expenses (Relation Property)
+
+Links to location entries in an Travel Expenses Database, allowing for detailed tracking of travel-related expenses. This is a one-to-many relation, enabling multiple expense entries to be associated with a location entry. The synced property name in the Expenses database is "Location".
+
+<Note>
+We recommend having travel expenses associated with a City type location entry.
+</Note>
+
+### 12. Notes (Relation Property)
+
+Connects to location entries in the Travel Notes Database, providing a way to associate detailed notes or journal entries with travel experiences. This is a one-to-many relation, allowing multiple notes to be linked to one location entry. The synced property name in the Travel Notes database is "Location".
+
+### 13. Tasks (Relation Property)
+
+Links to location entries in the Travel Tasks database, facilitating the management of travel-related tasks or to-do items. This is a one-to-many relation, enabling multiple tasks to be associated with a travel entry. The synced property name in the Tasks database is "Location".
+
+### 14. Favorite (Checkbox property)
+
+Allows marking a location as a favorite.
+
+### 15. Files & Media Property
+
+Allows adding files as attachment to any entry. For a free account, the upload size is limited to 5MB.
+
+## Database Views
+
+The Travel Master Database includes one pre-configured view named All places.
+
+<Note>
+Entries from this database are mostly viewed in Gallery views with the Page Cover as card preview, so make sure to add a page cover to every new location entry you create.
+</Note>
+
+# Travel Notes Database
+
+## Overview
+
+The Travel Notes database is designed to organize and manage travel-related information. It can be used for both planning and journaling experiences while visiting.
+
+## Database Schema
+
+The Travel Notes database includes the following properties:
+
+### 1. Name (Title Property)
+
+This is the primary identifier for each travel note entry. It should contain a brief, descriptive title of the travel note or experience.
+
+### 2. URL (URL Property)
+
+Provides a field to store relevant web links associated with the travel note. This could include links to booking confirmations, travel guides, or online resources related to the destination. Empowers you to use any Notion web clipper extension to save information from the internet.
+
+### 3. Type (Select Property)
+
+Allows for categorization of travel notes. We have created a few basic options like Finance, Packing, Itinerary, Transportation & Accommodation for the planning phase and Crucial Info, Journal & Media for the Visiting phase. Feel free to add more categories.
+
+### 4. Location (Relation Property)
+
+Creates a relation to the Travel Master Database. This allows users to link each travel note to a specific location, providing context and organization based on destinations. This is a many-to-one relation. The synced property name in the related database is "Notes".
+
+### 5. Parent Location (Rollup Property)
+
+Shows the parent location of the linked location entry using rollup property.
+
+### 6. Archived (Checkbox Property)
+
+Enables users to remove travel notes that are no longer actively needed without deleting them.
+
+### 7. Favorite (Checkbox Property)
+
+Allows users to mark specific travel notes as favorites. This can be useful for quickly accessing important or frequently referenced notes.
+
+### 8. Files & Media Property
+
+Allows adding files as attachment to any entry. For a free account, the upload size is limited to 5MB.
+
+### 9. Last edited time (Last Edited Time Property)
+
+Automatically records and updates the date and time when a travel note was last modified.
+
+## Database Views
+
+The Travel Notes database includes one pre-configured view named All Travel Notes.
+
+# Travel Tasks Database Documentation
+
+## Overview
+
+The Travel Tasks database efficiently manages and tracks travel-related tasks, streamlining planning and execution. It also uses Notion's Tasks Database feature which means that tasks will show up in the Home page. It can be used as an itinerary while visiting.
+
+## Database Schema
+
+The Travel Tasks database includes the following properties:
+
+### 1. Name (Title Property)
+
+This is the primary identifier for each travel task entry. It should contain a clear and concise description of the task.
+
+### 2. Status (Status Property)
+
+Tracks the current state of the task. It includes the following options:
+
+- To-do:
+    - Not started
+    - Parked (Can be used for optional itinerary items)
+- In progress:
+    - In progress
+- Complete:
+    - Done
+    - Aborted
+
+### 3. Date Property
+
+Records the date or date range associated with a task. 
+
+### 4. Itinerary (Checkbox Property)
+
+Used to indicate which task entries can be used at itinerary items on the day of visiting. When this property is checked, all planned activities will show up in the itinerary section of the Travel Master Database template. Make sure to check planned but optional activities so that the decision to do them can be made on the go.
+
+### 5. Assignee (Person Property)
+
+Used only to enable Tasks Database feature. Use the Delegated To property to keep track of the responsible person. If you have given others access to the travel workspace, then you use the this property instead of Delegated To property.
+
+### Priority (Select Property)
+
+Assigns importance levels to tasks. Options include: Urgent, Important, Optional
+
+### 6. Delegated To (Text Property)
+
+Used to keep track of who is responsible for executing a task entry by simply noting their name if they are not added to the travel workspace.
+
+### 7. Archived (Checkbox Property)
+
+Used to hide completed or irrelevant tasks without deleting them.
+
+### 8. Location (Relation Property)
+
+Creates a relation to the Travel Master Database. This allows users to link each travel task to a specific location. This is a many-to-one relation. The synced property name in the related database is "Tasks".
+
+### 9. Parent Location (Rollup Property)
+
+Shows the parent location of the linked location entry using rollup property.
+
+### 10. Created time property
+
+Automatically records when the entry was created.
+
+## Database Views
+
+The Travel Tasks database includes one pre-configured view named All Travel Tasks.
+
+# Travel Expenses Database
+
+## Database Overview
+
+The Travel Expenses database is designed to track and manage actual travel-related expenses.
+
+## Properties
+
+### 1. Name (Title Property)
+
+The name or brief description of the expense entry.
+
+### 2. Type (Select Property)
+
+Allows categorization of expenses.
+
+### 3. Amount (Number Property)
+
+The monetary value of the expense. It is formatted in US Dollars.
+
+### 4. Date Property
+
+The date when the expense occurred.
+
+### 5. Paid By (Text Property)
+
+Indicates who paid for the expense. 
+
+### 6. Owed By (Text Property)
+
+Help record the names of individuals who owe money to the person who paid, if that is the case.
+
+### 7. Settled (Checkbox Property)
+
+Indicates if the expense has been shared between all parties involved and nothing is owed.
+
+### 8. Location (Relation property)
+
+Links the expense to a specific location, in the Travel Master Database. It is a many-to-one relationship. The synced property name in the related database is "Expenses"
+
+### 9. Parent Location (Rollup Property)
+
+Shows the parent location of the linked location entry using rollup property.
+
+### 10. Receipt (Files & Media Property)
+
+Allows to upload an image/file of the transaction receipt. For a free account, the upload size is limited to 5MB. We recommend a document scanner app called Genius Scan, available on Android and iOS, to capture receipts quickly at optimal file size and clarity.
+
+### 11. Created time property
+
+Automatically records when the entry was created.
+
+## Database Views
+
+The Travel Expenses database includes one pre-configured view named All Travel Expenses.
+
+# New Location Template
+
+### Overview
+
+This location template provides as central hub for accessing all information in related databases to a location.
+
+## Template Structure
+
+### New Entry Buttons
+
+Four Buttons - New Note, New Task, New Itinerary item, New Expense when clicked will create entries in relevant databases with the Location property linked to the current page on the Travel Master Database.
+
+### Linked Databases
+
+### →Itinerary & Tasks
+
+- Purpose: Shows all tasks that are related to the current instance of the location template.
+- Views: Itinerary & Tasks
+- Layout: Table
+- Visible Properties: Name, Status, Date, Archived, Priority & [Delegated To]
+- Filter: Location or Parent Location contains current instance of Location template, Archived is unchecked, Itinerary is [checked/unchecked] & [Start Date is today]
+    - Optional filter: [Status & Date]
+- Sort: Ascending Date property
+- Group: None
+
+### →Notes
+
+- Purpose: Shows all notes that are related to the current instance of the location template.
+- Layout: Table
+- Visible Properties: Name, Type, URL, Files & Media and Archived
+- Filter: Location or Parent Location contains current instance of Location template & Archived is unchecked
+    - Optional filter: Type & Favorite
+- Sort: None
+- Group: None
+
+### →Expenses
+
+- Purpose: Shows all expenses that are related to the current instance of the location template.
+- Layout: Table
+- Visible Properties: Name, Amount, Paid By, Receipt, Owed By & Settled
+- Filter: Location or Parent Location contains current instance of Location template
+    - Optional filter: Type & Settled
+- Sort: Descending Created time.
+- Group: None
+
+### →Places
+
+- Purpose: Shows all locations whose root location or parent location is the current instance of the location template.
+- Layout: Gallery; Medium card size; Card preview: Page Cover
+- Visible Properties: Name & Rating
+- Filter: Parent Location or Root Location contains current instance of Location template
+- Sort: None
+- Group: None
+
+### People Table
+
+A simple table created to keep track of the individuals who have decided to join you. You can create more rows using the plus button that appears when you hover at the bottom.
+
+# Travel Page
+
+### Overview
+
+The page is designed to organize and display travel-related information using multiple views from the Travel Master Database.
+
+## Page Structure
+
+### New Location Button
+
+Placed on top the page, this button lets you quickly create a new entry in the Travel Master Database using the New Location template.
+
+## →Linked Databases
+
+### 1. All Locations
+
+- Purpose: Shows all locations in your Wishlist, in planning phase, currently visiting and have visited
+- Views: Wishlist, Planning, Visiting & Visited
+- Layout: Gallery; Small card size; Card preview: Page cover
+- Visible Properties: Name & Rating
+- Filter: Status is [Wishlist/
+    - Optional filter: Type
+- Sort: Descending Rating property
+- Group: None
+
+### 2. Countries Visited
+
+- Purpose: Shows all countries you have visited
+- Layout: Gallery; Small card size; Card preview: Page cover
+- Visible Properties: Name & Rating
+- Filter: Status is Visited and Type is Country
+- Sort: Descending Rating property
+- Group: By Continent in Alphabetical order; Hidden empty groups
+
+## Conclusion
+
+The Travel Master Database is a comprehensive tool for planning, tracking, and analyzing travel experiences, offering customizable solutions for complex travel needs. The Travel Notes Database captures, organizes, and retrieves travel information, creating a rich repository of experiences and knowledge for better planning and informed future decisions. The Travel Tasks Database manages travel-related activities, streamlining the planning process, ensuring task completion, and maintaining a clear overview of responsibilities.

@@ -3,7 +3,8 @@ import { ThemeProvider } from "@/components/contexts/theme-provider";
 import { AuthProvider } from "@/components/contexts/auth-provider";
 import { Navbar } from "@/components/navbar";
 import { Space_Mono, Space_Grotesk } from "next/font/google";
-import { Footer } from "@/components/footer";
+import { Providers } from "./providers";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "@/styles/globals.css";
 
 const sansFont = Space_Grotesk({
@@ -57,7 +58,6 @@ export default function RootLayout({
               <main className="sm:container mx-auto w-[90vw] h-auto scroll-smooth">
                 {children}
               </main>
-              <Footer />
             </div>
           </AuthProvider>
         </ThemeProvider>

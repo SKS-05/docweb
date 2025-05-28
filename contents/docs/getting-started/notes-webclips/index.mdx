@@ -1,0 +1,502 @@
+# Notes & Web Clips
+
+# Notes Master Database
+
+## Overview
+
+The Notes Master Database is a core component of Seribro, designed to capture and organize various types of information including notes, checklists, resource pools, web clips, and other content types. This database serves as a comprehensive knowledge management system, allowing users to store, categorize, and retrieve information efficiently.
+
+## Key Features
+
+### 1. Processing and Review Features
+
+- The Processed checkbox ensures that notes and web clips remain in the user's view until they have been properly dealt with. This feature helps maintain an organized workflow by keeping unprocessed information front and center.
+- The Check Later feature lets users flag notes for future review, ensuring important information isn't overlooked.
+- Favoriting enables users to quickly access their most important or frequently used notes, streamlining information retrieval.
+
+### 2. Web Clips Integration
+
+Notes with a populated URL property are considered Web Clips, allowing for easy saving and organization of online content.
+
+### 3. Hierarchical Organization
+
+The recursive nature of the database (Child Note and Parent Note properties) allows for nested note structures, called Resources. Consider them as collections or resource pool of notes.
+
+### 4. Task Integration
+
+Notes can be associated with tasks, projects, or goals through the Task and Pulling Task relations, facilitating action-oriented note-taking. The Root Task rollup provides a clear view of the highest-level task associated with each note.
+
+### 5. Area Categorization
+
+The Area relation, along with the Root Area and Parent Area rollups, allows for comprehensive categorization of notes, making it easier to group related information and understand its place in the broader knowledge structure.
+
+### 6. Cross-Database Visibility
+
+Rollup properties ensure that notes appear in relevant Task and Area pages, and also templates, creating a seamless connection between information and its context or related action items.
+
+### 7. Archiving System
+
+The Archived property enables users to declutter their active notes without permanently deleting information.
+
+## Database Schema
+
+The Notes Master Database includes the following properties:
+
+### 1. Name (Title Property)
+
+This is the primary identifier for each note entry.
+
+### 2. Type (Select Property)
+
+Categorizes the note into different types. Options include:
+
+- Plain : For simple or uncategorizable notes
+- Checklist : For numbered or bulleted lists like Shopping lists.
+- Journal : For daily journaling.
+- Resource : For a collection or resource pool of notes using the Parent-Child relation.
+- Idea : For strokes of brilliance.
+- Insight : For new pieces to the puzzles.
+- Epiphany : For rediscovering meanings of things hidden in plain sight.
+- Work : All work related notes. Maybe a new business idea.
+- Lecture : For note taking during a one-way communication session or broadcast.
+- Meeting : Note taking during two-way communication or discussion.
+- Voice : For note taking when typing is too cumbersome .
+- Video : When even a thousand pictures aren't enough.
+- Image : When a thousand words aren't enough.
+- Quote : When the way something was said is just right.
+
+<Note>
+You can add more types or delete existing ones to customize your Seribro. You can also change the property type from 'Select' to 'Multi-select' which will allow you to tag a note with multiple types. 
+</Note>
+
+### 3. URL (URL Property)
+
+Stores the source URL for web clips or online resources. Entering a URL in this field turns any note into a web clip and it'll show up in the Web Clips page.
+
+### 4. Domain Name (Formula Property)
+
+A formula is used to determine the domain name of a web clip URL for grouping in some views of the Web Clips page. 
+
+Following is the Notion formula for this property:
+
+```jsx
+replace(
+    prop("URL"), /* Get the URL property */
+
+    /* 'Regular expression' to match and capture the domain name */
+    "([^/]*//)?(www\\.)?([^/]*).*", 
+    /* 
+        - ([^/]*//)? matches the protocol (http:// or https://) if present
+        - (www\\.)? matches "www." if present
+        - ([^/]*) captures the domain name
+        - .* matches the rest of the URL
+    */
+    
+    "$3" /* Replace the entire URL with the captured domain name */
+)
+```
+
+### 5. Processed (Checkbox Property)
+
+Indicates whether the note has been reviewed or acted upon. When unchecked notes and web clips remain in their Inbox view on their respective pages. Make sure to assign Type, Area and/or Task before checking off this property. 
+
+### 6. Check Later (Checkbox Property)
+
+Allows users to flag notes for future review. Notes & Web Clips show up in the 'Check Later' view on the Notes  & Web Clips Page respectively.
+
+### 7. Favorite (Checkbox Property)
+
+Enables users to mark important or frequently accessed notes. Notes and web clips show up in the Favorites view on their respective pages.
+
+### 8. Archived (Checkbox Property)
+
+Used to remove notes or web clips from any of the view on their respective pages without deletion. Archived notes and web clips can still be found in the Archived views of the Notes Master Database.
+
+### 9. Parent Note (Relation Property)
+
+Enables hierarchical organization by linking to other notes within the database. Used for creating 'Resource' Type notes and web clips which are considered as collections of notes or web clips. This is a many-to-one relation, allowing only note to be a parent note of a child note. The synced property name is within the same database is "Child Note".
+
+### 10. Child Note (Relation Property)
+
+The inverse of Parent Note, showing which note or web clip this entry is nesting. This is a one-to-many relation, allowing multiple notes to be associated with a parent note.
+
+### 11. Parent Note Area (Rollup Property)
+
+Indicates the area of the parent note, if applicable.
+
+### 12. Area (Relation Property)
+
+Links the note to an entry in the Areas Database, allowing for categorization by life area or topic. This is a many-to-many relation. The synced property name in the Areas Master Database is "Notes".
+
+### 13. Root Area (Rollup Property)
+
+Shows the highest-level area related to this note, rolled up from the Area relation.
+
+### 14. Task (Relation Property)
+
+Connects the note or web clip to a specific task, project or goal in the Tasks Master Database. This is a one-to-many relation. The synced property name in the Tasks Master Database is "Notes".
+
+### 15. Task Area (Rollup Property)
+
+Shows the Area that the connected task is assigned.
+
+### 16. Root Task (Rollup Property)
+
+Displays the top-level task, project or goal associated with this note, derived from the Task relation.
+
+### 17. Pulling Task (Relation Property)
+
+Allows tasks to reference this note even if they are not directly related. This is a many-to-many relation. The synced property name in the Tasks Master Database is "Pulled Notes".
+
+### 18. Files & Media
+
+Allows adding files as attachment to any entry. For a free account, the upload size is limited to 5MB.
+
+### 19. Last edited time
+
+Automatically updates when the note is modified. Used in sorting and grouping notes and web clips in various views on their respective pages.
+
+### 20. Edited (Formula Property)
+
+A formula property used to show the time passed since the note or web clip was last edited in a neat way. It is calculated using the Last edited time property mentioned above. 
+
+Following is the Notion formula of this property:
+
+```jsx
+let(
+    lastEdited, prop("Last edited time"), /* Store the last edited time property in a variable */
+    
+    let(
+        now, now(), /* Get the current time */
+        
+        let(
+            years, dateBetween(now, lastEdited, "years"), /* Calculate the difference in years */
+            
+            let(
+                months, dateBetween(now, lastEdited, "months"), /* Calculate the difference in months */
+                
+                let(
+                    days, dateBetween(now, lastEdited, "days"), /* Calculate the difference in days */
+                    
+                    let(
+                        monthsRemaining, dateBetween(dateSubtract(now, years, "years"), lastEdited, "months"), /* Calculate remaining months after full years */
+                        
+                        let(
+                            daysRemaining, dateBetween(dateSubtract(now, months, "months"), lastEdited, "days"), /* Calculate remaining days after full months */
+                                
+                            if(
+                                dateBetween(now, lastEdited, "years") < 1, /* Check if less than a year */
+                                
+                                if(
+                                    dateBetween(now, lastEdited, "months") < 1, /* Check if less than a month */
+                                    format(days) + "d", /* Output days */
+                                    
+                                    format(months) + "m, " + format(daysRemaining) + "d" /* Output months and remaining days */
+                                ),
+                                
+                                format(years) + "y, " + format(monthsRemaining) + "m, " + format(daysRemaining) + "d" /* Output years, remaining months, and days */
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    )
+).style("c","b","blue","blue_background") /* Apply styles to the output */
+
+```
+
+### 21. Created time
+
+Automatically records when the note was created. Used in sorting notes and web clips in the Inbox, Check Later and Recent view of their respective pages.
+
+### 20. Created (Formula Property)
+
+A formula property used to show the time passed since the note or web clip was created in a neat way. It is calculated using the Created time property mentioned above. So do not delete that property. If you change its name, you will have to change it in the formula as well if you want this property to work. 
+
+Following is the Notion formula of this property:
+
+```jsx
+let(
+    created, prop("Created time"), /* Store the Created time property in a variable */
+    
+    let(
+        now, now(), /* Get the current time */
+        
+        let(
+            years, dateBetween(now, created, "years"), /* Calculate the difference in years */
+            
+            let(
+                months, dateBetween(now, created, "months"), /* Calculate the difference in months */
+                
+                let(
+                    days, dateBetween(now, created, "days"), /* Calculate the difference in days */
+                    
+                    let(
+                        monthsRemaining, dateBetween(dateSubtract(now, years, "years"), created, "months"), /* Calculate remaining months after full years */
+                        
+                        let(
+                            daysRemaining, dateBetween(dateSubtract(now, months, "months"), created, "days"), /* Calculate remaining days after full months */
+                                
+                            if(
+                                dateBetween(now, created, "years") < 1, /* Check if less than a year */
+                                
+                                if(
+                                    dateBetween(now, created, "months") < 1, /* Check if less than a month */
+                                    format(days) + "d", /* Output days */
+                                    
+                                    format(months) + "m, " + format(daysRemaining) + "d" /* Output months and remaining days */
+                                ),
+                                
+                                format(years) + "y, " + format(monthsRemaining) + "m, " + format(daysRemaining) + "d" /* Output years, remaining months, and days */
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    )
+).style("c","b","green","green_background") /* Apply styles to the output */
+
+```
+
+## Database Views
+
+The database includes several pre-configured views:
+
+1. All Notes: Shows all active notes.
+2. Archived Notes: Shows all notes marked as archived.
+3. All Web Clips: Shows all active web clips.
+4. Archived Web Clips:  Shows all archived web clips.
+
+## Best Practices
+
+- Use the Type property consistently to categorize notes effectively.
+- Leverage the hierarchical structure (Child/Parent Note) for complex topics or projects.
+- Regularly review and process notes using the Check Later and Processed properties.
+- Utilize the Archived property instead of deleting notes to maintain a comprehensive knowledge base.
+- Take advantage of the Task relations and Root Task rollup to create an actionable note-taking system.
+- Use the Area relation to create a multi-level organizational structure for your notes.
+
+The Notes Master Database serves as a versatile and powerful tool for capturing, organizing, and retrieving information within the Seribro system. Its integration with other databases, flexible property structure, and intelligent use of rollup properties allows for a highly customizable and effective knowledge management solution that can adapt to complex information hierarchies and task relationships.
+
+# Notes Database Templates
+
+## Details Side Panel
+
+For every Note Database Template, all note properties are located in the Details Side Panel that can be accessed by clicking the Panel button on the top right corner of the page ("view details" alt text)  or clicking the 'View details' button below the title of the page. The Area property and Files & Media property appears separately for quick access.
+
+## Note Template
+
+This is the default template for any type of note. Since Notion was initially built as a documentation tool, it has good text editing features. So you can simply start typing irrespective of the type of note. However, you can create your own custom templates if you prefer it. 
+
+## Resource Template
+
+This template is created for notes that behave as a collection of other notes and web clips also called Resources. It has a callout block for context and a linked database. The details of the linked database are as follows
+
+### Linked Notes & Web Clips
+
+- Purpose: Shows all the Notes that are children or sub-items of this template.
+- Layout: List
+- Visible Properties: Name, Type, URL & Created
+- Filter: Archived is unchecked & Parent Note contains current instance of the Resource Template
+- Sort: Descending Created time
+- Group: None
+
+## Journal Template
+
+This template is dedicated for daily journal entries. All entries created using this template will be automatically named using the current date, has the Type Journal and is linked to a Journaling Area. It has 3 simple questions:
+
+1. What do you want to remember about today?
+2. What are you grateful for today?
+3. What did you realize today?
+
+# Notes Page
+
+### Overview
+
+This page serves as a central hub for managing notes (without URL). The page is divided into several sections, each is a linked databases or view of the Notes Master Database.
+
+## Page Structure
+
+### New Note Button
+
+Placed on top of the page, this button lets you quickly create a new note.
+
+### Linked Databases
+
+The Notes Page has multiple Linked Databases or Views, each designed to display Notes in different contexts. They are:
+
+### 1. Notes Inbox
+
+- Purpose: Shows newly added or unprocessed notes
+- Layout: Table
+- Visible Properties: Name, Processed, Type, Check Later, Favorite, Task & Created
+- Filter: URL is empty, Archived is unchecked and Processed in unchecked
+    - Optional filters: Type & Area
+
+<Note>
+Remember to clear optional filters after using them or else they will continue to affect your results.
+
+</Note>
+
+- Sort: Descending Created time
+- Group: None
+
+### 2. Notes to Check Later
+
+- Purpose: Shows notes that have been marked for later review using Check Later property
+- Layout: List
+- Visible Properties: Name, Type & Edited
+- Filter: URL is empty, Archived is unchecked and Check Later is checked.
+    - Optional filters: Type & Area
+- Sort: Ascending Created time
+- Group: None
+
+### 3. Recent Notes
+
+- Purpose: Shows recently added or modified notes
+- Layout: List
+- Visible Properties: Name, Type, Area, Task & Edited
+- Filter: URL is empty, Archived is unchecked and Last edited time is on or after 1 month ago
+    - Optional filters: Type & Area
+- Sort: Descending Created time
+- Group: By relative Last edited time; Newest first; Hidden empty groups.
+
+### 4. Favorite Notes
+
+- Purpose: Shows notes that have been marked as favorites
+- Layout: List
+- Visible Properties: Name, Type, Area, Task & Edited
+- Filter: URL is empty, Archived is unchecked and Favorite is checked
+    - Optional filters: Type & Area
+- Sort: Descending Created time
+- Group: By relative Last edited time; Oldest first; Hidden empty groups.
+
+### 5. All Notes
+
+- Purpose: Displays all unarchived notes in the master database
+- Layout: Table
+- Visible Properties: Name, Type, Area, Task, Processed, Check Later, Favorite, Archived, Edited & Created
+- Filter: URL is empty & Archived is unchecked
+    - Optional filters: Type & Area
+- Sort: Descending Created time
+- Group: By relative Last edited time; Newest first; Hidden empty groups.
+
+### →By Type
+
+- Purpose: Likely groups notes by a "Type" property
+- Layout: Board
+- Visible Properties: Name
+- Filter: URL is empty & Archived is unchecked
+- Sort: Descending Created time
+- Group: By Type; Hidden empty groups.
+
+### →Archived Notes
+
+- Purpose: Displays all archived notes in the master database
+- Layout: Table
+- Visible Properties: Name, Type, Area, Task, Processed, Check Later, Favorite, Archived, Edited & Created
+- Filter: URL is empty & Archived is checked
+    - Optional filters: Type & Area
+- Sort: Descending Last edited time
+- Group: By relative Last edited time; Newest first; Hidden empty groups.
+
+# Web Clips Page
+
+### Overview
+
+The Web Clips page serves as a central hub for managing web clippings and related notes within the Notes Master Database.
+
+<Note>
+One of the best way to save web clips from the internet while on your desktop is to use the browser extension 'Flylighter'. 
+
+---
+
+ It currently supports Chromium-based web browsers and any other browser that supports Chrome extensions. Firefox and Safari support are planned as future releases.
+
+Its not the official Notion extension which is named 'Notion Web Clipper', although you can use that if you like it. We recommend Flylighter for its ability to create custom workflows for particular notion databases, customize properties when saving the clipping, being able to save or even append highlights and save content from the web page which shows up as content inside the Web Clip. It can even take note of timestamps on YouTube videos. 
+
+Here's the Web Store link to Flylighter: 
+
+https://chromewebstore.google.com/detail/flylighter-capture-articl/dlmdffmkcggiicjbfnjcnikkpahgplmd
+
+</Note>
+
+## Page Structure
+
+The page is divided into several sections, each represented by database views from the Notes Master Database. 
+
+### New Web Clip Button
+
+Placed on top of the page, this button lets you quickly create a new web clip.
+
+### Linked Databases
+
+The Web Clips Page has the following Linked Databases or Views:
+
+### 1. Web Clips Inbox
+
+- Purpose: Shows newly added or unprocessed web clips
+- Layout: Table
+- Visible Properties: Processed, Name, Type, Check Later, Favorite, Task & Area
+- Filter: URL is not empty, Archived is unchecked and Processed in unchecked
+    - Optional filter: Area
+- Sort: Descending Created time
+- Group: None
+
+### 2. Web Clips to Check Later
+
+- Purpose: Shows web clips that have been marked for later review using Check Later property
+- Layout: List
+- Visible Properties: Name, URL & Edited
+- Filter: URL is not empty, Archived is unchecked and Check Later is checked.
+    - Optional filter: Area
+- Sort: Ascending Created time
+- Group: None
+
+### 3. Recent Web Clips
+
+- Purpose: Shows recently added or modified web clips
+- Layout: List
+- Visible Properties: Name, URL & Edited
+- Filter: URL is not empty, Archived is unchecked and Last edited time is on or after 1 month ago
+    - Optional filter: Area
+- Sort: Descending Created time
+- Group: By Domain Name; Exact text, Alphabetical; Hidden empty groups.
+
+### 4. Favorite Web Clips
+
+- Purpose: Shows web clips that have been marked as favorites
+- Layout: List
+- Visible Properties: Name, URL & Edited
+- Filter: URL is not empty, Archived is unchecked and Favorite is checked
+    - Optional filter: Area
+- Sort: Descending Created time
+- Group: By Domain Name; Exact text, Alphabetical; Hidden empty groups.
+
+### 5. All Web Clips
+
+- Purpose: Displays all web clips in the database
+- Layout: Table
+- Visible Properties: Name, Type, Area, Task, Processed, Check Later, Favorite, Archived, Edited & Created time
+- Filter: URL is not empty & Archived is unchecked
+    - Optional filter: Area
+- Sort: Descending Created time
+- Group: By Domain Name; Exact text, Alphabetical; Hidden empty groups.
+
+### →Archived Web Clips
+
+- Purpose: Displays all archived web clips in the database
+- Layout: Table
+- Visible Properties: Name, Type, Area, Task, Processed, Check Later, Favorite, Archived, Edited & Created time
+- Filter: URL is not empty & Archived is checked
+    - Optional filter: Area
+- Sort: Descending Last edited time
+- Group: By Domain Name; Exact text, Alphabetical; Hidden empty groups.
+
+## Conclusion
+
+The Notes Master Database serves as a versatile and powerful tool for capturing, organizing, and retrieving information within the Seribro system. Its integration with other databases, flexible property structure, and intelligent use of rollup properties allows for a highly customizable and effective knowledge management solution that can adapt to complex information hierarchies and task relationships.
+
+The Notes and Web Clips page serves as a comprehensive dashboards for managing all types of notes and web clippings within the Notes Master Database. Their layouts and views are designed to provide quick access to new, important, and categorized notes and web clips, facilitating efficient information processing and retrieval. The use of various views allows for a well-organized approach to handling manually entered and web-based information, from initial capture to review and categorization.

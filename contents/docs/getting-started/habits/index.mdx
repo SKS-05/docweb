@@ -1,0 +1,423 @@
+# Habits
+
+# Habits Master Database
+
+## Overview
+
+The Habits Master Database is foundation on which Seribro's Habit Tracking System is built. It provides a structured approach to habit formation and monitoring, allowing users to create recurring habits. This database uses a third party integration to record data on to a Google Sheet which then creates a graph based on a habit 'success streak'.
+
+## Key Features
+
+### Flexible repeat intervals
+
+Central system for tracking daily, weekly, monthly, and yearly habits. Provides a structured foundation for consistent habit formation and monitoring.
+
+### **Recurring Habit Templates**
+
+Creates recurring habit entries based on custom schedules. Eliminates manual entry and ensures consistent tracking of regular habits.
+
+### Streaks Counter & Charts
+
+Automatically tracks habit streaks and generates charts to visualize progress. Enables data-driven insights using third party integration.
+
+### **Goal Integration**
+
+Links habits directly to broader goals in the Tasks Master Database. Helps maintain alignment between daily actions and long-term objectives.
+
+## Database Schema
+
+The Habits Master Database includes the following properties:
+
+### 1. Name (Title Property)
+
+This is the primary identifier for each habit entry. It should be a clear and concise description of the habit. For recurring habits the name will naturally be repeated.
+
+### 2. ID Property
+
+Shows a system-generated unique identifier for each entry in the database. This is used only to recognize entries in the Google Sheet used as a part of the automation setup. It can be useful to search for an entry if an error has occurred.
+
+### 3. Type (Select Property)
+
+Categorizes the habit into different frequency types. Options include:
+
+- Yearly
+- Monthly
+- Weekly
+- Daily
+
+### 4. Status Property
+
+Indicates the current state of the habit. It is shown as a checkbox instead of a selection since only two options are used. They are:
+
+- Not started
+- Done
+
+### 5. Date Property
+
+Used to set specific dates for habits, which can be useful for time-bound habits or for tracking habit streaks.
+
+### 6. Assignee (Person Property)
+
+Allows people to be assigned to a habit.
+
+This property is added only to allow for this database to be considered as a Task Database so that tasks can appear in Notion Home under My Tasks widget (may need to be enabled in the top right corner of Notion Home). This property will need to be manually assigned to yourself in any recurring template you create. You simply have to assign this property to "Person who duplicated page" shortcut when editing a template.
+
+### 7. Area (Relation Property)
+
+Links the habit to an Area in the Areas Database, allowing for categorization by life area or topic. This is a one-to-one relation, meaning each habit can be associated with one area.
+
+### 8. Goal (Relation Property)
+
+Connects the habit to a specific goal in the Goals Database. This is a one-to-one relation, allowing each habit to be linked to a broader goal or objective.
+
+### 9. Root Goal (Rollup Property)
+
+Shows the parent goal or task of the already linked goal in the above mentioned property.
+
+### 10. Last edited time property
+
+Automatically updates when the habit entry is modified. This can help in monitoring which habits have been recently updated or reviewed.
+
+### 11. Edited (Formula Property)
+
+A formula property used to show the time passed since the habit was last edited, in a neat way. It is calculated using the Last edited time property mentioned above. So do not delete that property. If you change its name, you will have to change it in the formula as well if you want this property to work. 
+
+Following is the Notion formula of this property:
+
+```jsx
+let(
+    lastEdited, prop("Last edited time"), /* Store the last edited time property in a variable */
+    
+    let(
+        now, now(), /* Get the current time */
+        
+        let(
+            years, dateBetween(now, lastEdited, "years"), /* Calculate the difference in years */
+            
+            let(
+                months, dateBetween(now, lastEdited, "months"), /* Calculate the difference in months */
+                
+                let(
+                    days, dateBetween(now, lastEdited, "days"), /* Calculate the difference in days */
+                    
+                    let(
+                        monthsRemaining, dateBetween(dateSubtract(now, years, "years"), lastEdited, "months"), /* Calculate remaining months after full years */
+                        
+                        let(
+                            daysRemaining, dateBetween(dateSubtract(now, months, "months"), lastEdited, "days"), /* Calculate remaining days after full months */
+                                
+                            if(
+                                dateBetween(now, lastEdited, "years") < 1, /* Check if less than a year */
+                                
+                                if(
+                                    dateBetween(now, lastEdited, "months") < 1, /* Check if less than a month */
+                                    format(days) + "d", /* Output days */
+                                    
+                                    format(months) + "m, " + format(daysRemaining) + "d" /* Output months and remaining days */
+                                ),
+                                
+                                format(years) + "y, " + format(monthsRemaining) + "m, " + format(daysRemaining) + "d" /* Output years, remaining months, and days */
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    )
+).style("c","b","blue","blue_background") /* Apply styles to the output */
+
+```
+
+### 12. Created Time Property
+
+Automatically records when the habit entry was created. This can be useful for tracking how long a habit has been in the system.
+
+## Database Views
+
+The Habits Master Database includes two pre-configured views:
+
+1. All Habits: Displays all habit entries in the habits master database. 
+    1. Sorting: Descending Last edited time
+2. Habits Calendar: Displays all habit entries in a calendar view
+
+## Best Practices
+
+- Use the Type property consistently to categorize habits by their intended frequency.
+- Regularly update the Status property to reflect the current state of each habit.
+- Use the Assignee property for shared habits or when managing habits for a group.
+
+# Habit Templates
+
+Since habits need repeated entries, Seribro uses Notion's Repeating Database Template feature to create new entries as often as needed. This also means that there isn't a single template for habits, instead a new template needs to be created for each new habit. To track all habit entries in a single page, Seribro uses a 'Habit Goal' template, created in the Tasks Master Database, which is linked to all the Habit entries in the Habits Master Database related to a particular goal. 
+
+Here's how to create a Habit Goal in the Tasks Master Database:
+
+1. Start by creating a Goal in the Tasks Master Database using the New Habit Goal template. Alternately, you can find the New Habit Goal button at the top of the Dashboard, My Day or Habits Page. Name this Habit Goal after the habit you want to form and its ideal frequency (e.g., "Exercise Daily"). All recurring habit templates in the Habits Master Database, upon creation, must be linked to this goal.
+2. If you're planning ahead, you can set the Date on which you want to begin forming the habit. This will be useful in a later step. If you prefer it, you can also enter an End Date by which you want the habit to be formed, although this relies heavily on your dedication to your goal. 
+    1. This can be used in conjunction with the optional properties mentioned in the Tasks Master Database documentation and you can see how soon or late were you able to form the habit than your predicted date. You will need to make the Completed button property and Date Deviation property visible in the Habit Goals linked database in the Habits page. 
+
+Here's how to create a Habit Template
+
+1. In the Habits Page, go to any linked database (other than Habit Goals), and click the New dropdown, then select New Template.
+2. Configure the following properties:
+    1. Template Name: Use the habit name only (e.g., "Exercise")
+    2. Area: Assign it to the relevant category.
+    3. Assignee: Set as "Person who duplicated page."
+    4. Date: Set to "Today - Date when duplicated."
+    5. Goal: Link to the New Habit Goal you created in Step 1.
+    6. Type: Select the interval (Daily, Weekly, Monthly, or Yearly) for how often you want to practice this habit.
+3. Close the template and go back to the dropdown next to the New button, click the ellipses icon next to the template you just created, and select Repeat.
+4. Choose the repetition interval:
+    1. Daily, Monthly, or Yearly: Specify how often (e.g., every 2 days, every month) you want entries to be created.
+    2. Weekly: Specify the interval and select which days of the week this habit should appear.
+5. Select a Start Date for when you want entries to start being created automatically. If you set a Start Date in Step 1, you can use it here.
+6. Choose a Time for when each habit entry will be generated. Setting this to an hour much earlier than the time you usually wake up,  ensures entries always appear at the start of your day.
+
+Your habit entries will now auto-populate in the Habits Master Database based on your schedule. Keep in mind that upcoming habit entries won't appear in advance—they'll show up only on the day they're scheduled.
+
+<Note>
+Remember to delete or modify the repeating template when necessary.
+</Note>
+
+# Habit Tracker Automation
+
+The Seribro Habit Tracker Automation is designed to bridge a gap in Notion's native capabilities by enabling seamless, automated habit tracking. By integrating Notion with Google Sheets, this feature captures daily habit entries, tracks consistency, and visualizes progress over time—all of which Notion alone cannot manage. With automatic updates and streak calculations, the Seribro Habit Tracker lets users monitor their habits in real-time and motivates them to stay on track toward personal goals, offering a dynamic and organized solution for effective habit-building.  
+
+<Note>
+You'll need a Google Account to get started and this [Seribro Habit Tracker Google Sheet template](https://docs.google.com/spreadsheets/d/1MTdYnDHp9sIP3fvGnMRQYAqvoEDs0cl2qNdt9GUQ-rI/edit?usp=sharing).
+</Note>
+
+## Seribro Habit Tracker Google Sheet template
+
+Here's a quick explanation of how the Habit Tracker Google sheet words. The Google Sheet file has two worksheets within - Data & Streaks. The Data worksheet is where the automation records entries from the Habits Master Database. Since the automation only enters 4 fields of data - Unique ID, Status, Name & Date, the other columns on this worksheet have been deleted so that the file doesn't unnecessarily exceed Google Sheet's 10 Million cell limit. 
+
+The Streaks worksheet automatically calculates your habit streaks based on the entries in your Google Sheet. Each time you mark a habit as "Done" in Notion, it updates the worksheet, tracking how many consecutive days you've completed the habit. If you miss a day, the streak resets to zero. 
+
+It does the above by using three Google Sheet formulae.
+
+On cell B1 of the Streaks worksheet the formula shown below is pasted. It finds all the unique names of Habit entries and lists them throughout the first row in descending order of their appearance in the Data worksheet.
+
+```jsx
+=TRANSPOSE(SORT(UNIQUE(FILTER(Data!$C:$C, Data!$C:$C<>"")),SEQUENCE(COLUMNS(TRANSPOSE(UNIQUE(FILTER(Data!$C:$C, Data!$C:$C<>""))))),0))
+```
+
+On cell A2 of the Streak worksheet the formula shown below is pasted. It finds all the unique dates of Habit entries and lists them throughout the first column in reverse chronological order.
+
+```jsx
+=SORT(SORT(UNIQUE(FILTER(Data!$D:$D, Data!$D:$D<>""))),SEQUENCE(COLUMNS(TRANSPOSE(SORT(UNIQUE(FILTER(Data!$D:$D, Data!$D:$D<>"")))))),0)
+```
+
+On all cells except the ones in the first row and  first column the formula shown below is pasted. It is responsible for calculating the streak. If a Habit Entry for a given name and data has "Done" status then it adds 1 to the previous value. If not, it sets the value to 0.
+
+This formula is by default pasted on all cells till Column Z, Row 1000. But as the file expands the formula needs to be copied to new columns. There is a simple way of doing this: 
+
+1. Select a cell in Row 2 with the formula already in it. Note: This formula has absolute and relative cell referencing in it. So copying and pasting the formula given below will only works if its pasted in cell B2. Else the formula must be modified to match the cell it will be pasted in.
+2. Click and hold the small blue square in the bottom-right corner. Drag the square horizontally till the desired cell/column in Row 2 to copy the formula. There's no need to copy vertically as this will be covered in the next step.
+3. To apply a formula throughout a column, first select the cell in Row 2 with the formula in it. Then press `Ctrl`+`Shift`+`↓`. This will select all cells below the current one. Press `Ctrl`+`D`. This will copy the formula throughout the column.
+
+```jsx
+=IFERROR(
+    LET(lastRow,ArrayFormula(max(if(len(B:B),row(B:B),))),
+        thisCol,SUBSTITUTE(ADDRESS(1,COLUMN(),4),"1",""),
+        thisFilter,FILTER(Data!$B:$B,B$1=Data!$C:$C,$A2=Data!$D:$D),
+        IF(ROW()=lastRow,
+            IFS(
+                CHOOSEROWS(thisFilter,-1)=="Done",1,
+                CHOOSEROWS(thisFilter,-1)=="Not Started",0
+            ),
+            IF(
+                IFS(
+                    CHOOSEROWS(thisFilter,-1)=="Done",true,
+                    CHOOSEROWS(thisFilter,-1)=="Not Started",false
+                ),
+                SUM(INDEX(INDIRECT("R[1]C",FALSE):INDIRECT(thisCol & lastRow),MATCH(TRUE,INDIRECT("R[1]C",FALSE):INDIRECT(thisCol & lastRow)<>"",0)),1),
+                0
+            )
+        )
+    )
+)
+```
+
+When combined with Charts, the Streaks feature helps you visualize your consistency and provides motivation by showing how well you're maintaining your goals over time. Charts created can be embedded in back Notion and will allow you to visually see your progress without leaving the Seribro workspace.
+
+Although Google Sheets has a 10 million cells limit on the entire file, the performance of the file will seriously deteriorate as you approach this limit. To avoid running out of rows and keep the file functioning optimally, consider backing up and clearing old data every few years.
+
+## Automation Setup Tutorial
+
+[https://youtu.be/Pf5y3B7Fjkw](https://youtu.be/Pf5y3B7Fjkw)
+
+<Note>
+To set up the automation quickly, go through the video tutorial shown above. The steps given below go through the same process but provide more clarity.
+</Note>
+
+### Step 1: Set Up Your Google Drive and Google Sheet
+
+1. Create a New Folder in Google Drive named Seribro.
+2. Open the Seribro Habit Tracker Google Sheet template using the link provided above. 
+3. Go to File > Make a copy and give the new sheet a name other than "Seribro Habit Tracker". This is necessary to avoid confusion in a later step. To keep it simple, name it Habit Tracker. 
+4. Move the Copy: Move your newly created Google Sheet into the Seribro folder.
+5. Leave the Test Entry: The first row in the Google Sheet has a test entry. Leave it as it is; it will help with testing later.
+
+### Step 2: Create a test entry in the Habit Master Database in Notion
+
+1. In your Seribro Notion workspace, go to the Databases page and open the Habits Master database.
+2. Add a new test entry with a unique name different from the one in the Google Sheet, and set the Date property.
+
+### Step 3: Set Up Automation on SureTriggers
+
+1. Visit [suretriggers.com](http://suretriggers.com/) and create an account by clicking 'Get Started'. This is the workflow automation service we'll be using. 
+2. Start a new workflow and give it a descriptive name.
+3. Click Add Trigger and select Notion.
+4. Choose Updated database item as the trigger event.
+5. Connect your Notion account when prompted and locate the Habits Master Database. Grant access and continue.
+6. Select your Notion account and the Habits Master Database.
+7. Click Fetch Data to retrieve a sample, then click Save.
+
+<Note>
+The SureTriggers free plan gives you 1000 tasks per month which should suffice. 
+</Note>
+
+### Step 4: Set Up Google Sheets as the Action
+
+1. Click the + icon to add a new action, then select Google Sheets.
+2. Choose the Add New Row event.
+3. Connect your Google account, ensuring it has access to your spreadsheets by clicking on the relevant checkboxes.
+4. Select the Google Sheet you named in Step 2 ('Habit Tracker') and choose the Data worksheet.
+5. You will now see input fields with headers that belong to the test entry in the Google Sheet. Match each field with the correct property names as shown below using the '@' symbol. The greyed-out data you see is from your test entry in Notion and is unique to you.
+    1. `Item Properties ID Unique Id Number`   
+    2. `Item Properties Status Status Name` 
+    3. `Item Properties Name Title 0 Text Content` 
+    4. `Item Properties Date Date Start` 
+6. Click Test Action to check if everything is set up correctly. A successful response means your setup is working.
+7. Click Save to complete your workflow setup.
+8. Return to your Google Sheet to confirm that the automation has created a new entry. 
+
+Going forward, this setup will routinely update your Google Sheet with new entries from the Seribro Habits Master Database. Over time, your Google Sheet will populate with habit entries. 
+
+<Note>
+You cannot make changes to any of these above mentioned properties in the Habits Master Database in Notion.
+</Note>
+
+### Step 5: Create Charts in Google Sheet
+
+1. In your Google Sheet, add a worksheet named Charts.
+2. Go to Insert > Chart. In the Chart Editor, choose Line Chart as the chart type.
+3. Set the Data Range to `Streaks!A1:Z1000` . This will need to be updated when new habits are added and the data in Streaks worksheet exceeds 1000 rows or 26 columns.
+4. For the X-axis, select data from column A, and in Series, select only the habits you want to display.
+5. Enable 'Use row 1 as headers'.
+
+### Step 6: Customize the Charts
+
+1. Under Customize > Chart Style, set the chart border to None.
+2. For a smooth curves, enable the Smooth option. Note: The smooth curves will clip in the extreme edges and to avoid this you will have to increase the maximum and minimum values under vertical axis.
+3. Enable 'Plot Null Values'
+4. You can set the Horizontal Axis > Slant Label Angle for readability (optional). Leaving it at 'Auto' should be fine.
+5. For a cleaner look, Disable Major Gridlines and  Major Ticks for both Horizontal and Vertical axes.
+6. For a super minimal look, you can disable axis label entirely by setting Major Count to None for both axes. Make sure Major Spacing Type is set to Count in order to do this.
+7. If you're using Notion in Dark Mode then set the Chart Background Color under Chart Style to `#191919` . You'll need to set the text color under Legends, Horizonal Axis and Vertical Axis sections to white.
+
+### Step 7: Publish and Embed Charts in Notion
+
+1. Click on the chart's More (three dots/ellipses) icon and select Publish chart.
+2. Ensure Automatically republish when changes are made is checked, then click Publish and Okay.
+3. Copy the link and go to your Notion Habits page.
+4. Type `/embed`, paste the link, and resize or arrange the chart as needed.
+5. If you add new habits, go back to the Chart Editor and add the new habit names under Series.
+
+***Your chart is ready!***
+
+# Habits Page
+
+### Overview
+
+The Habits page serves as a dashboard to keep track of and visualize your consistency while building habits.
+
+## Page Structure
+
+### New Habit Goal **B**utton
+
+Placed on top of the page, this lets you quickly create a new habit goal using the Habit Goal Template in the Tasks Master Database.
+
+## →Linked Databases & Charts
+
+### 1. Todays Habits
+
+- Purpose: Shows Habits that have been automatically created by the repeating database templates and are to be done today.
+- Layout: List
+- Visible Properties: Name & Status as a checkbox
+- Filter: Start Date is Today
+- Sort: Ascending Created time
+- Group: None
+
+### 2. Habits in Progress
+
+This section is kept empty for embedding a chart for the habits currently being pursued.
+
+### 3. Habits Goals
+
+### →Ongoing view
+
+- Purpose: Shows Habits Goals that have begun according to their Start Date
+- Layout: Table
+- Visible Properties: Name, Status, Completed button, Date, Habit Progress, Habit Count, Date Deviation & Archived
+- Filter: Habits is not empty, Type is Goal, Archived is unchecked, Start Date is on or before Today and Status is not Done or Aborted.
+- Sort: Ascending Date property
+- Group: None
+
+### →Inbox view
+
+- Purpose: Shows Habits Goals that have been recently added but not yet processed.
+- Layout: Table
+- Visible Properties: Name, Processed, Date, Status & Archived
+- Filter: Habits is not empty, Type is Goal, Archived is unchecked and processed in unchecked
+- Sort: Ascending Created time
+- Group: None
+
+### →Upcoming view
+
+- Purpose: Shows Habits Goals whose Start Date is within the next 30 days
+- Layout: Table
+- Visible Properties: Name, Status,  Date, & Archived
+- Filter: Habits is not empty, Type is Goal, Archived is unchecked and Start Date is next 30 days relative to current date.
+- Sort: Ascending Date property
+- Group: None
+
+### →Archived view
+
+- Purpose: Shows Habits Goals that have been archived
+- Layout: Table
+- Visible Properties: Name, Status, Completed button, Date, Habit Progress, Habit Count, Date Deviation & Archived
+- Filter: Habits is not empty, Type is Goal, Archived is checked.
+- Sort: Descending Last edited time.
+- Group: None
+
+### 4. Previous Charts
+
+This is a Toggle Heading section and you can move embedded charts inside this section AFTER you have toggled the chevron (drop-down button or arrow head icon) left of the heading. This section is added so that the charts of previously pursued habits can be embedded.
+
+### 5. Habit History
+
+- Views: Week & Month
+- Purpose: Shows Habit entries that were created in the recent past
+- Layout: Calendar
+- Visible Properties: Name & Status as checkbox
+- Filter: None
+- Sort: None
+- Group: None
+
+### 6. All Habits
+
+- Purpose: Shows all Habit entries
+- Layout: Table
+- Visible Properties: Name, Status, Date, Type, Goal, Area & Edited
+- Filter: None
+- Sort: Descending created time.
+- Group: By exact name; Sorted manually
+
+## Conclusion
+
+The Habits Master Database serves as a powerful tool for habit tracking and management. Its integration with task master database, automation feature, Google Sheets Charts and pre-configured views allow for a highly customizable and effective habit formation system that can adapt to various personal or professional needs.
+
+<Note>
+Don't try to form every habit you can think of at once. Pick and choose a handful that are important to you. Practice them until they have become self sustaining and then move on to the next. 
+</Note>

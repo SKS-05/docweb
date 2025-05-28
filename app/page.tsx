@@ -72,18 +72,6 @@ export default function Home() {
           {!isLoggedIn && <LockIcon className="w-4 h-4" />}
           Get Started
         </Link>
-        <Link
-          href={isLoggedIn ? "/blog" : '/login'}
-          className={buttonVariants({
-            variant: "secondary",
-            className: "px-6 flex items-center gap-2",
-            size: "lg",
-          })}
-          onClick={!isLoggedIn ? (e) => e.preventDefault() : undefined}
-        >
-          {!isLoggedIn && <LockIcon className="w-4 h-4" />}
-          Read Blog
-        </Link>
       </div>
       {!isLoggedIn && (
         <p className="text-sm text-muted-foreground mt-4">

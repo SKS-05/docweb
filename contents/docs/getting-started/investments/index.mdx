@@ -1,0 +1,602 @@
+# Investments
+
+Seribro's ancillary finance system has 2 databases for tracking investments - Investment Master Database and the Investment Types Database.
+
+# Investments Master Database Documentation
+
+## Overview
+
+The Investments Master Database is a comprehensive system designed to track and manage investment portfolios. It provides a structured approach to recording investment details, monitoring performance, and tracking transactions over time.
+
+## Database Schema
+
+The Investments Master Database includes the following properties:
+
+### 1. Name (Title Property)
+
+This is the primary identifier for each investment entry. It should contain the name of the investment, such as the stock ticker symbol or fund name.
+
+### 2. Type (Relation Property)
+
+This property creates a relation to Investment Types Database (database which contains different types of investments. It allows users to categorize each investment. The is a many-to-one relation. The synced property name in the Investment Types Database is "Investments".
+
+### 3. Purchase Date (Date Property)
+
+Records the date and time when the investment was initially purchased. Make sure to record the time as well as this may be necessary in some circumstances.
+
+### 4. Purchase Price (Number Property)
+
+Stores the price at which the investment was purchased. This property is formatted as a dollar amount.
+
+### 5. Purchase Quantity (Number Property)
+
+Stores the quantity of investments purchased.
+
+### 6. Total Purchase Amount (Formula Property)
+
+Calculated by multiplying Purchase Price and Purchase Quantity.
+
+The Notion formula is as follows:
+
+```jsx
+multiply(prop("Purchase Price"),prop("Purchase Quantity"))
+```
+
+### 7. Holding Period (Formula Property)
+
+Shows how long you've held a purchase without selling. 
+
+The formula for this property is as follows:
+
+```jsx
+let(
+    purchaseDate, prop("Purchase Date"),
+
+    /* Stores the "Purchase Date" property in a variable called purchaseDate. */
+
+    if(
+        prop("Sold"),
+        
+        /* If the item is sold: */
+
+        let(
+            sellDate, prop("Sale Date").dateStart(),
+
+            /* Stores the start date of "Sale Date" in a variable called sellDate. */
+
+            let(
+                years, dateBetween(sellDate, purchaseDate, "years"),
+
+                /* Calculates the years between the sale date and purchase date. */
+
+                let(
+                    months, dateBetween(sellDate, purchaseDate, "months"),
+
+                    /* Calculates the total months between the sale date and purchase date. */
+
+                    let(
+                        days, dateBetween(sellDate, purchaseDate, "days"),
+
+                        /* Calculates the total days between the sale date and purchase date. */
+
+                        let(
+                            monthsRemaining, dateBetween(dateSubtract(sellDate, years, "years"), purchaseDate, "months"),
+
+                            /* Calculates the remaining months after subtracting full years from the duration. */
+
+                            let(
+                                daysRemaining, dateBetween(dateSubtract(sellDate, months, "months"), purchaseDate, "days"),
+
+                                /* Calculates the remaining days after subtracting full months from the duration. */
+
+                                if(
+                                    dateBetween(sellDate, purchaseDate, "minutes") <= 0,
+                                    "Invalid Purchase Date",
+
+                                    /* If the purchase date is after the sale date, returns "Invalid Purchase Date". */
+
+                                    if(
+                                        dateBetween(sellDate, purchaseDate, "years") < 1,
+
+                                        /* If less than 1 year has passed: */
+
+                                        if(
+                                            dateBetween(sellDate, purchaseDate, "months") < 1,
+                                            format(days) + "d",
+
+                                            /* If less than 1 month has passed, shows days only. */
+
+                                            format(months) + "m, " + format(daysRemaining) + "d"
+                                            
+                                            /* Otherwise, shows months and remaining days. */
+                                        ),
+
+                                        /* If 1 year or more has passed: */
+
+                                        format(years) + "y, " + format(monthsRemaining) + "m, " + format(daysRemaining) + "d"
+                                        
+                                        /* Shows years, remaining months, and days. */
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        ),
+
+        /* If the item is not sold: */
+
+        let(
+            now, now(),
+
+            /* Stores the current date and time in a variable called now. */
+
+            let(
+                years, dateBetween(now, purchaseDate, "years"),
+
+                /* Calculates the years between now and the purchase date. */
+
+                let(
+                    months, dateBetween(now, purchaseDate, "months"),
+
+                    /* Calculates the total months between now and the purchase date. */
+
+                    let(
+                        days, dateBetween(now, purchaseDate, "days"),
+
+                        /* Calculates the total days between now and the purchase date. */
+
+                        let(
+                            monthsRemaining, dateBetween(dateSubtract(now, years, "years"), purchaseDate, "months"),
+
+                            /* Calculates the remaining months after subtracting full years from the duration. */
+
+                            let(
+                                daysRemaining, dateBetween(dateSubtract(now, months, "months"), purchaseDate, "days"),
+
+                                /* Calculates the remaining days after subtracting full months from the duration. */
+
+                                if(
+                                    dateBetween(now, purchaseDate, "minutes") <= 0,
+                                    "Invalid Purchase Date",
+
+                                    /* If the purchase date is in the future, returns "Invalid Purchase Date". */
+
+                                    if(
+                                        dateBetween(now, purchaseDate, "years") < 1,
+
+                                        /* If less than 1 year has passed: */
+
+                                        if(
+                                            dateBetween(now, purchaseDate, "months") < 1,
+                                            format(days) + "d",
+
+                                            /* If less than 1 month has passed, shows days only. */
+
+                                            format(months) + "m, " + format(daysRemaining) + "d"
+                                            
+                                            /* Otherwise, shows months and remaining days. */
+                                        ),
+
+                                        /* If 1 year or more has passed: */
+
+                                        format(years) + "y, " + format(monthsRemaining) + "m, " + format(daysRemaining) + "d"
+                                        
+                                        /* Shows years, remaining months, and days. */
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    )
+).style("c", "b", "blue", "blue_background")
+
+/* Styles the final result with blue text and a blue background. */
+
+### 8. Sold (Checkbox Property)
+
+Indicates whether the investment has been sold or not.
+
+### 9. Sale Date (Date Property)
+
+If the investment has been sold, this property records the date of the sale.
+
+### 10. Sale Price (Number Property)
+
+Price at which the individual item was sold. Its formatted in US Dollars.
+
+### 11. Sold Button (Button Property)
+
+When clicked, this button checks the Sold Checkbox, triggers the Sale Date, requests the user to enter the sale price and open the entry page. 
+
+### 12. Total Sale Amount (Formula Property)
+
+Calculated by multiplying Sale Price with Purchase Quantity.
+
+The Notion formula is as follows:
+
+```jsx
+multiply(prop("Sale Price"),prop("Purchase Quantity"))
+```
+
+### 13. Return on Investment (Formula Property)
+
+Calculated by subtracting Total Purchase Amount from Total Sale Amount.
+
+The Notion formula is as follows:
+
+```jsx
+subtract(prop("Total Sale Amount"),prop("Total Purchase Amount"))
+```
+
+### 14. ROI % (Formula Property)
+
+Calculated by dividing Return on Investment by Total Purchase Amount.
+
+The Notion formula is as follows:
+
+```jsx
+round(divide(prop("Return On Investment"),prop("Total Purchase Amount")) *10000)/10000
+```
+
+### 15. Current Market Price (Number Property)
+
+Records the current market price of the investment. Its formatted in US Dollars.
+
+### 16. Current Market Value (Formula Property)
+
+Calculated by multiplying the Current Market Price by Purchase Quantity.
+
+The Notion formula is as follows: 
+
+```jsx
+multiply(prop("Current Market Price"),prop("Purchase Quantity"))
+```
+
+### 17. Current ROI (Formula Property)
+
+Calculated by subtracting Total Purchase Amount from Current Total Market Value.
+
+The Notion formula is as follows:
+
+```jsx
+subtract(prop("Current Total Market Value"),prop("Total Purchase Amount"))
+```
+
+### 18. Current ROI % (Formula Property)
+
+Calculates ROI percentage by dividing Current Return on Investment by Total Purchase Amount.
+
+The Notion formula is as follows:
+
+```jsx
+round(divide(prop("Current Return On Investment"),prop("Total Purchase Amount"))*10000) / 10000
+```
+
+### 19. Result (Formula Property)
+
+Shows Win or Lose based on if profit was made or not.
+
+The Notion formula is as follows:
+
+```jsx
+ifs(
+  empty(prop("Sale Price")) or empty(prop("Purchase Price")), "",
+
+  /* If either "Sale Price" or "Purchase Price" is empty, return an empty string. */
+
+  prop("Sale Price") > prop("Purchase Price"), "Win",
+
+  /* If the "Sale Price" is greater than the "Purchase Price," return "Win." */
+
+  "Lose"
+  /* If none of the above conditions are met, return "Lose." */
+)
+
+```
+
+### 20. Last edited time
+
+Timestamp property that records when the entry was last edited.
+
+### 21. Edited (Formula Property)
+
+ Used to show the time passed since the entry was last edited in a neat way. 
+
+The Notion formula is as follows:
+
+```jsx
+let(
+    lastEdited, prop("Last edited time"), /* Store the last edited time property in a variable */
+    
+    let(
+        now, now(), /* Get the current time */
+        
+        let(
+            years, dateBetween(now, lastEdited, "years"), /* Calculate the difference in years */
+            
+            let(
+                months, dateBetween(now, lastEdited, "months"), /* Calculate the difference in months */
+                
+                let(
+                    days, dateBetween(now, lastEdited, "days"), /* Calculate the difference in days */
+                    
+                    let(
+                        monthsRemaining, dateBetween(dateSubtract(now, years, "years"), lastEdited, "months"), /* Calculate remaining months after full years */
+                        
+                        let(
+                            daysRemaining, dateBetween(dateSubtract(now, months, "months"), lastEdited, "days"), /* Calculate remaining days after full months */
+                                
+                            if(
+                                dateBetween(now, lastEdited, "years") < 1, /* Check if less than a year */
+                                
+                                if(
+                                    dateBetween(now, lastEdited, "months") < 1, /* Check if less than a month */
+                                    format(days) + "d", /* Output days */
+                                    
+                                    format(months) + "m, " + format(daysRemaining) + "d" /* Output months and remaining days */
+                                ),
+                                
+                                format(years) + "y, " + format(monthsRemaining) + "m, " + format(daysRemaining) + "d" /* Output years, remaining months, and days */
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    )
+).style("c", "b", "blue", "blue_background") /* Apply styles to the output */
+
+```
+
+## Database Views
+
+The Investments Master Database includes one pre-configured view named All Investments.
+
+# Investment Types Database Documentation
+
+## Overview
+
+The Investment Types database is a crucial component of Seribro's Investments feature, designed to categorize and manage different types of investments. This database serves as a portfolio.
+
+## Database Schema
+
+The Investment Types database includes the following properties:
+
+### 1. Name (Title Property)
+
+This is the primary identifier for each investment type entry. It should contain a clear and concise name of the investment type (e.g., Stocks, Bonds, Real Estate).
+
+### 2. Investments (Relation Property)
+
+This property creates a relation with the Investments Master Database. It is a one-to-many relationship. The synced property name in the related database is "Type".
+
+### 3. Active (Rollup Property)
+
+Calculates the total number of unsold investments using the Investments relation property.
+
+### 4. Current Investments (Formula Property)
+
+Used only to show Active property along with a label.
+
+The Notion formula is as follows:
+
+```jsx
+style("Current Investments: ","gray")+
+prop("Active")
+```
+
+### 5. Inactive (Rollup Property)
+
+Calculates the total number of sold investments using the Investments relation property.
+
+### 6. Past Investments (Formula Property)
+
+Used only to show Inactive property along with a label.
+
+The Notion formula is as follows:
+
+```jsx
+style("Past Investments: ","gray")+
+prop("Inactive")
+```
+
+### 7. Total Investments ( Formula Property)
+
+Shows the sum of Active and Inactive properties along with a label
+
+The Notion formula is as follows:
+
+```jsx
+style("Total Investments: ","gray")+
+add(prop("Active"),prop("Inactive"))
+```
+
+### 8. Separator 1 & Separator 2 (Formula Property)
+
+Both properties create blank lines that are used as aesthetic separators.
+
+### 9. Total Purchase (Rollup Property)
+
+Calculates the sum of Total Purchase Amount across all linked investments in the Investments Master Database using rollup.
+
+### 10. Total Purchase Amount (Formula Property)
+
+Used only to show Total Purchase along with a label. You may need to change the currency symbol in the formula.
+
+The Notion formula is as follows:
+
+```jsx
+style("Total Purchase: ","Gray")+
+"$"+
+prop("Total Purchase")
+```
+
+### 11. Total Returns (Rollup Property)
+
+Calculated the sum of Return on Investment across all linked investments in the Investments Master Database using rollup.
+
+### 12. Total Return Amount (Formula Property)
+
+Used only to show Total Returns along with a label. You may need to change the currency symbol in the formula.
+
+The Notion formula is as follows:
+
+```jsx
+style("Total Returns: ","Gray")+
+"$"+
+prop("Total Returns")
+```
+
+### 13. All Results (Rollup Property)
+
+Shows a list of results of all linked investments in the Investments Master Database using rollup.
+
+### 14. Win Percentage (Formula Property)
+
+Calculates the percentage of wins across all results.
+
+The Notion formula is as follows:
+
+```jsx
+style("Win Percentage: ", "gray") + 
+/* Styles the text "Win Percentage: " in gray. */
+
+round(
+    (length(filter(prop("All results"), current == "Win")) * 100 / length(prop("All results"))) * 100
+) / 100 + "%" 
+/* Calculates the percentage of "Win" entries in "All results," rounds it to two decimal places, and appends "%." */
+```
+
+### 15. Win : Lose Ration (Formula Property)
+
+Show number of Wins to number of loses.
+
+The Notion formula is as follows:
+
+```jsx
+style("Win:Lose : ", "gray") + 
+/* Styles the text "Win:Lose :" in gray. */
+
+format(length(filter(prop("All results"), current == "Win"))) + 
+/* Counts the "Win" entries in "All results" and formats the number as text. */
+
+":" + 
+/* Adds a colon ":" to separate the Win and Lose counts. */
+
+format(length(filter(prop("All results"), current == "Lose"))) 
+/* Counts the "Lose" entries in "All results" and formats the number as text. */
+
+```
+
+### 16. Overall Result (Formula Property)
+
+Shows Win if there are more Wins in All results. Shows Lose otherwise.
+
+The Notion formula is as follows:
+
+```jsx
+style("Overall Result: ", "gray") + 
+/* Styles the text "Overall Result: " in gray. */
+
+let(
+    winCount, length(filter(prop("All results"), current == "Win")),
+    /* Counts the number of "Win" entries in "All results" and stores it in `winCount`. */
+
+    let(
+        loseCount, length(filter(prop("All results"), current == "Lose")),
+        /* Counts the number of "Lose" entries in "All results" and stores it in `loseCount`. */
+
+        if(
+            empty(winCount) and empty(loseCount),
+            "N/A", 
+            /* If both `winCount` and `loseCount` are empty, return an empty string. */
+
+            if(
+                winCount > loseCount,
+                "Win", 
+                /* If `winCount` is greater than `loseCount`, return "Win". */
+
+                "Lose" 
+                /* Otherwise, return "Lose". */
+            )
+        )
+    )
+)
+
+```
+
+## Database Views
+
+The Investment Types database includes one pre-configured view names All Types.
+
+# Investment Page
+
+### Overview
+
+The Investments page is a comprehensive dashboard that provides an overview of investment activities, views for updating prices  and perform retrospective analysis. The page is structured with various database views from the Investment Types database and the Investments Master Database.
+
+## Page Structure
+
+### New Purchase Button
+
+On top of the page a New Purchase Button can be used to quickly create entries in the Investments Master Database.
+
+## →Linked Databases
+
+### 1. Recent Investments
+
+### →Bought
+
+- Purpose: Shows all recently purchased investments
+- Layout: Table
+- Visible Properties: Name, Type, Purchase Date, Purchase Price, Purchase Quantity, Total Purchase Amount & Edited
+- Filter: Purchase Date is empty, Purchase Price is empty, Purchase Quantity is empty & Last edited time is on or after one week ago.
+- Sort: Descending Purchase Date property
+- Group: None
+
+### →Update
+
+- Purpose: Shows investments that are currently in holding.
+- Layout: Table
+- Visible Properties: Name, Sell Button, Current Market Price, Current Market Value, Current ROI, Current ROI % and Holding Period.
+- Filter: Purchase Date, Price and Total Purchase Amount is not empty.
+- Sort: Ascending Purchase Date property
+- Group: None
+
+### →Sold
+
+- Purpose: Shows all recently sold investments
+- Layout: Table
+- Visible Properties : Name, Sale Price, Sale Date, Holding Period, Total sales, Return on Investment, ROI % and Result property.
+- Filter: Sold is checked, Sale price is not empty and Last edited time was on after one week ago.
+- Sort: Descending Sale Date property
+- Group: None
+
+### 2. Investment Retrospective
+
+- Purpose: Shows all sold investments
+- Layout: Table
+- Visible Properties : Name, Purchase Quantity, Purchase Price, Total Purchase Amount, Holding Period, Sale Price, Total Sale Amount, Return on Investment and ROI %.
+- Filter: Sold is checked & Last edited time is before a week ago.
+- Sort: Descending Sale Date property
+- Group: None
+
+### 3. Portfolio Overview
+
+- Purpose: Shows key data points for each investment type.
+- Layout: Gallery; Medium card size; No card preview
+- Visible Properties: Name, Current Investments, Past Investments, Total Investments, Separator 1, Total Purchase, Total Returns. Separator 2, Win Percentage, Win : Lose Ratio &  Overall Result.
+- Filter: None
+- Sort: Descending Total Returns property
+- Group: None
+
+## Conclusion
+
+The Investments Master Database is a comprehensive tool for tracking and managing investments, providing insights into performance and aiding informed decision-making.
+
+The Investment Types database categorizes investment options within the Seribro workspace, enabling users to analyze their portfolio's composition and diversity.

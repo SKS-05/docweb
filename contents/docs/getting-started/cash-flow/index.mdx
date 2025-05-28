@@ -1,0 +1,759 @@
+# Cash Flow
+
+Seribro's core finance system is made up of four separate databases and, similar to the Habit Tracker, includes the use of a third party integration with an automation service to record data on to a Google Sheet. The four databases are the Transaction Master Database, Accounts Database, Categories Database and the Budgets Master Database. Combined, the databases and the integration provides a system of tracking expenses, budgeting and other forms of financial analysis in the Cash Flow page.
+
+# Transactions Master Database Documentation
+
+## Overview
+
+The Transactions Master Database is a component of Seribro's core finance system, designed to track and manage financial transactions. It serves as a central repository for recording various types of monetary activities, providing a detailed view of financial movements within the system. 
+
+## Database Schema
+
+The Transactions Master Database includes the following properties:
+
+### 1. ID Property
+
+Shows a system-generated unique identifier for each entry in the database. It uses a prefix TRXN. This is used only to recognize entries in the Google Sheet used as a part of the automation setup. It can be useful to search for an entry if an error has occurred.
+
+### 2. Name (Title Property)
+
+This is the primary identifier for each transaction entry. It should typically contains a brief description of the transaction.
+
+### 3. Date (Date Property)
+
+Captures the date when the transaction occurred.
+
+### 4. Type (Select Property)
+
+Categorizes the transaction into different types. Options include:
+
+- Deposit
+- Withdrawal
+
+### 5. Amount (Number Property)
+
+Records the monetary value of the transaction. This property is formatted in US Dollars and needs to be changed to your preferred currency.
+
+### 6. Account (Relation Property)
+
+Links the transaction to a specific account in the Accounts Database. This is a many-to-one relation, meaning each transaction can be associated with only one account. The synced property name in the Accounts Database is "Transactions".
+
+### 7. Category (Relation Property)
+
+Connects the transaction to a category in the Categories Database. This is also a many-to-one relation, allowing each transaction to be classified under a single category. The synced property name in the Categories Database is "Transactions".
+
+### 8. Receipt (Files & Media Property)
+
+Allows to upload an image/file of the transaction receipt. For a free account, the upload size is limited to 5MB. We recommend a document scanner app called Genius Scan, available on Android and iOS, to capture receipts quickly at optimal file size and clarity.
+
+<Note>
+This property can be incredibly useful for recording tax deductible transactions.
+</Note>
+
+### 9. Remarks (Text Property)
+
+Provides space for additional notes or details about the transaction.
+
+### 10. Account Title (Formula Property)
+
+Used to save the Account name in the previously mentioned relation property as text. It exists only for ease of setting up the automation.
+
+### 11. Category Title (Formula Property)
+
+Used to save the Category name in the previously mentioned relation property as text. It exists only for ease of setting up the automation.
+
+## Database Views
+
+The Transactions Master Database includes only an 'All Transactions' view.
+
+# Categories Database Documentation
+
+## Overview
+
+The Categories database is a component of the Seribro's core finance system, designed to categorize various financial aspects of your life i.e., for managing different categories of transactions and budget goals.
+
+## Database Schema
+
+The Categories database includes the following properties:
+
+### 1. Name (Title Property)
+
+This is the primary identifier for each category entry. It represents the name or title of the financial category.
+
+### 2. Transactions (Relation Property)
+
+This property connects a Category to a transactions in the Transactions database. It is a one-to-many relation, allowing multiple transactions to be associated with a category. The synced property name in the Transactions Master Database is "Category".
+
+### 3. Sum (Rollup Property)
+
+Calculates the sum of all transactions under a given category.
+
+### 4. Budgets (Relation Property)
+
+This property links a Category entry to a Budget Goal in the Budget Goals Master Database. It is a one-to-many relation, allowing multiple budget goals to be associated with a category. The synced property name in the Budgets Master Database is "Category".
+
+## Database Views
+
+The Categories database includes only an "All Categories" view.
+
+# Accounts Database Documentation
+
+## Overview
+
+The Accounts database is a component of the Seribro's core finance system, designed to organize transactions based on your Bank Accounts. It can also be used to create virtual piggy bank account to store funds in over a long period of time for a particular cause. 
+
+<Note>
+Note that in case of Deposits, money is added to linked account and in case of Withdrawals money is removed from the linked account. 
+
+In case of Investments, you must first create a Withdrawal entry for your investment amount linked to a bank account and later when you receive the returns or dividends of your investment, create a Deposit entry for the amount linked to a bank account.
+
+In case of loans/debt, the opposite must be done. A Deposit entry first of the principal amount you received and periodic Withdrawal entries of the repayment amount with interest that you paid.
+</Note>
+
+<Note>
+You can also use this database to create a virtual piggy bank account by creating Withdrawal entries and linking it to an account named as per your goal (e.g., Family Vacation) instead of the account the money will be withdrawn from. Over time the virtual account will show how much you have allocated. However, this would be completely hypothetical and you'll have to make sure not to withdraw this sum from your actual bank account for other purposes.
+</Note>
+
+<Note>
+To get an accurate balance, you must account for every transaction including charges and fees that your bank bills you. You can do this by creating a new category in the Category Database to keep track of these charges for each bank.
+</Note>
+
+## Database Schema
+
+The Accounts database includes the following properties:
+
+### 1. Name (Title Property)
+
+This is the primary identifier for each account entry. It usually represents the name or title of a bank account. We recommend using an abbreviation of the name of your bank account.
+
+### 2. Transactions (Relation Property)
+
+This property connects an account to a transaction in the Transactions Master database. It is a one-to-many relation, allowing multiple transactions to be associated with an account. The synced property name in the Transactions Master Database is "Account".
+
+### 3. Balance (Rollup Property)
+
+Calculates the balance after all transactions for a given bank account.
+
+## Database Views
+
+The Categories database includes only an "All Accounts" view.
+
+# Budgets Master Database Documentation
+
+## Overview
+
+The Budgets Master Database is a component of Seribro's core Finance system, designed as a central repository for budget goals, allowing users to set financial targets and categorize spending.
+
+## Database Schema
+
+The Budgets Master Database includes the following properties:
+
+### 1. ID Property
+
+Shows a system-generated unique identifier for each entry in the database. It uses a prefix BUDG. This is used only to recognize entries in the Google Sheet used as a part of the automation setup. It can be useful to search for an entry if an error has occurred.
+
+### 2. Name (Title Property)
+
+This is the primary identifier for each budget entry. It represents the name or description of the budget item. We recommend simply mentioning the Category name followed by Month & Year.
+
+### 3. Date (Date Property)
+
+This property allows users to set a specific date for the budget entry, which could represent the due date, the date of expense, or any other relevant time point.
+
+### 4. Amount (Number Property)
+
+This property stores the financial value associated with the budget item. This property is formatted in US Dollars and needs to be changed to your preferred currency.
+
+### 5. Category (Relation Property)
+
+This property links each budget entry to a category in the Categories database. It is a many-to-one relation, meaning many budget entry can be associated with one category. The synced property name in the Categories Database is "Budgets".
+
+### 6. Category Title
+
+Used to save the Category name in the previously mentioned relation property as text. It exists only for ease of setting up the automation.
+
+### 7. Remarks (Text Property)
+
+This property provides space for additional notes, comments, or explanations related to the budget entry.
+
+## Database Views
+
+The Budgets Master Database includes only an "All Budget Goals" view.
+
+# Finance Tracker Automation
+
+In order to enhance Notion's capabilities and provide better analysis of your finances Seribro uses another automation setup similar to the Habit Tracker automation where data from the Transactions Master Database and the Budgets Master Database is recorded on a Google Sheet template. The Google Sheet reorganizes the data and allows you to track your spending and your budgeting per category from a weekly to a yearly basis. It also allows you to know how closely you were able to match your budget and track your net worth over the large spans of time. The sheet along with charts you create can then be embedded back into Seribro's Cash Flow page. 
+
+<Note>
+You'll need a Google Account and this [Seribro Finance Tracker Google Sheet template](https://docs.google.com/spreadsheets/d/1vq1sfBuwVIpAGVHNAxepXQCj87fAtor7iPSw2NEZAt8/edit?usp=sharing).
+</Note>
+
+## Seribro Finance Tracker Google Sheet template
+
+The Finance Tracker sheet has two worksheets that record data, namely Transactions Data and Budgets Data, and two worksheets, Transaction Overview and Budget Overview, that reorganize the data so that it can be viewed by Category and Time Interval . Additionally, a worksheet named Analysis shows deviation of actual transactions from budgets and a Charts worksheet visualizes useful data. The setup of all the worksheets is discussed in detail below, however you can skip directly to the integration setup if you wish.
+
+**Transactions Data**
+
+This worksheet records 7 fields of data from each entry in the Transactions Master Database - Unique ID, Type, Name, Date, Category, Amount & Account. The ensuing 7 columns use formulae to show the net value, running balance, week, month, quarter, year and fiscal year of the transaction. 
+
+1. Net Value - pasted on H1
+
+```jsx
+=ArrayFormula(IF(ISBLANK(B:B),,IF(B:B="Withdrawal",-1*G:G,G:G)))
+```
+
+1. Running balance - pasted on I1
+
+```jsx
+=ARRAYFORMULA(IF(ISBLANK(H:H),,SCAN(0,H:H,LAMBDA(runningTotal,currentValue,runningTotal + currentValue))))
+```
+
+1. Week - pasted on J1
+
+```jsx
+=ArrayFormula(IF(ISBLANK(D:D),,YEAR(D:D)&" W"&WEEKNUM(D:D)))
+```
+
+1. Month - pasted on K1
+
+```jsx
+=ArrayFormula(IF(ISBLANK(D:D),,DATE(YEAR(D:D),MONTH(D:D),1)))
+```
+
+1. Quarter - pasted on L1
+
+```jsx
+=ArrayFormula(IF(ISBLANK(D:D),,LET(Quarter, CEILING(MONTH(D:D)/3),YEAR(D:D)&" "&"Q"&Quarter&IF(YEAR(D:D)=YEAR(TODAY()),IF(Quarter=CEILING(MONTH(TODAY())/3)," - Current",""),""))))
+```
+
+1. Year - pasted on M1
+
+```jsx
+=ArrayFormula(IF(ISBLANK(D:D),,YEAR(D:D)))
+```
+
+1. Fiscal Year - pasted on N1
+
+<Note>
+Depending on your country, you will need to change the formula for your fiscal year. It is currently set to the most common March to April. 
+To change it, you simply need to change the nested IF condition  `IF(MONTH(C:C)>3`  simply change the number `3` to the number of the Month (1-12) when your fiscal year end. For example if your fiscal year ends in June set it to `6`  changing this part of the formula to `IF(MONTH(C:C)>6` . If it ends in September the formula would be `IF(MONTH(C:C)>9`. 
+
+Some countries use the calendar year as the fiscal year and wouldn't need this field at all.
+</Note>
+
+```jsx
+=ArrayFormula(IF(ISBLANK(D:D),,IF(MONTH(D:D)>3,"FY "&YEAR(D:D)&"-"&TEXT(D:D+365,"yy"),"FY "&YEAR(D:D)-1&"-"&TEXT(D:D,"yy"))))
+```
+
+**Budgets Data**
+
+This worksheet records 4 fields of data from every entry in the Budgets Master Database - Unique ID, Category, Data & Amount. The ensuing 5 columns use formulae to show week, month, quarter, year and fiscal year of the entry. 
+
+Here are the formulae:
+
+1. Week - pasted on E1
+
+```jsx
+=ArrayFormula(IF(ISBLANK(C:C),,YEAR(C:C)&" W"&WEEKNUM(C:C)))
+```
+
+1. Month - pasted on F1
+
+```jsx
+=ArrayFormula(IF(ISBLANK(C:C),,DATE(YEAR(C:C),MONTH(C:C),1)))
+```
+
+1. Quarter - pasted on G1
+
+```jsx
+=ArrayFormula(IF(ISBLANK(C:C),,LET(Quarter, CEILING(MONTH(C:C)/3),YEAR(C:C)&" "&"Q"&Quarter&IF(YEAR(C:C)=YEAR(TODAY()),IF(Quarter=CEILING(MONTH(TODAY())/3)," - Current",""),""))))
+```
+
+1. Year - pasted on H1
+
+```jsx
+=ArrayFormula(IF(ISBLANK(C:C),,YEAR(C:C)))
+```
+
+1. Fiscal Year - pasted on I1
+
+<Note>
+Depending on your country, you will need to change the formula for your fiscal year. It is currently set to the most common March to April. 
+To change it, you simply need to change the nested IF condition  `IF(MONTH(C:C)>3`  simply change the number `3` to the number of the Month (1-12) when your fiscal year end. For example if your fiscal year ends in June set it to `6`  changing this part of the formula to `IF(MONTH(C:C)>6` . If it ends in September the formula would be `IF(MONTH(C:C)>9`. 
+
+Some countries use the calendar year as the fiscal year and wouldn't need this field at all.
+</Note>
+
+```jsx
+=ArrayFormula(IF(ISBLANK(C:C),,IF(MONTH(C:C)>3,"FY "&YEAR(C:C)&"-"&TEXT(C:C+365,"yy"),"FY "&YEAR(C:C)-1&"-"&TEXT(C:C,"yy"))))
+```
+
+**Transactions Overview**
+
+This worksheet filters data from the Transactions Data worksheet based on Category, Time Interval and Account. 
+
+1. Column A beginning from row 3 shows time intervals which can be changed using the dropdown menu on cell A1. The options are Weekly, Monthly, Quarterly, Yearly and By Fiscal Year. The following formula is pasted on cell A3:
+
+```jsx
+=IF(A1="Monthly",SORT(UNIQUE(FILTER('Transactions Data'!J:J,'Transactions Data'!J:J<>"")),1,FALSE),
+    IF(A1="Quarterly",SORT(UNIQUE(FILTER('Transactions Data'!K:K,'Transactions Data'!K:K<>"")),1,FALSE),
+        IF(A1="Yearly",SORT(UNIQUE(FILTER('Transactions Data'!L:L,'Transactions Data'!L:L<>"")),1,FALSE),
+            IF(A1="Weekly",SORT(UNIQUE(FILTER('Transactions Data'!M:M,'Transactions Data'!M:M<>"")),1,FALSE),
+                IF(A1="By Fiscal Year",SORT(UNIQUE(FILTER('Transactions Data'!N:N,'Transactions Data'!N:N<>"")),1,
+                    FALSE),SORT(UNIQUE(FILTER('Transactions Data'!J:J,'Transactions Data'!J:J<>"")),1,FALSE)
+                    )
+            )
+        )
+    )
+)
+```
+
+1. The Account used to filter the data can be selected using the dropdown menu in cell A2 which lists all unique account entries from Transactions Data worksheet using Dropdown (from a range) feature. 
+
+<Note>
+In order to view data across all accounts, simply select cell A2 and press Delete.
+</Note>
+
+1. Row 1 beginning from column C shows the all unique Categories from Transaction Data worksheet except income. The following formula is pasted on cell C1:
+
+```jsx
+=TRANSPOSE(SORT(UNIQUE(FILTER('Transactions Data'!E:E,'Transactions Data'!E:E<>"",'Transactions Data'!E:E<>"Income"))))
+```
+
+1. Column B beginning from row 3 shows the total across categories for each time interval. The following formula is pasted across Column B starting at cell B3:
+
+```jsx
+=IF(ISBLANK($A3),,SUM($C3:3))
+```
+
+1. Row 2 beginning from column B shows a quick graph, using SPARKLINE function, of the data over the 4 most recent time intervals. The graph data is sorted chronologically from left to right.  The following formula is pasted across Row 2 starting at cell B2:
+
+```jsx
+=IF(ISBLANK(B1),,
+    IF(OR(ISBLANK(B3),ISBLANK(B4)),
+        "Lack Data",
+        SPARKLINE(B3:B6,{"rtl",true})
+    )
+)
+```
+
+<Note>
+An upward slope indicates increased spending.
+</Note>
+
+1. All remainder cells beginning from row 3 to 1000, column C to Z have the following formula pasted:
+
+```jsx
+=IFERROR(
+    IF(OR(ISBLANK(C$1),ISBLANK($A3)),,
+        SUM(
+            FILTER('Transactions Data'!$F:$F,
+                C$1='Transactions Data'!$E:$E,
+                IF($A$1="Monthly",$A3='Transactions Data'!$J:$J,
+                    IF($A$1="Quarterly",$A3='Transactions Data'!$K:$K,
+                        IF($A$1="Yearly",$A3='Transactions Data'!$L:$L,
+                            IF($A$1="Weekly",$A3='Transactions Data'!$M:$M,
+                                IF($A$1="By Fiscal Year",$A3='Transactions Data'!$N:$N,
+                                    $A3='Transactions Data'!$J:$J
+                                )
+                            )
+                        )
+                    )
+                ),
+                IF(OR(ISBLANK($A$2),$A$2=="All"),
+                    ""<>'Transactions Data'!$G:$G,$A$2=='Transactions Data'!$G:$G
+                )
+            )    
+        )
+    )
+,0)
+```
+
+**Budget Overview**
+
+This worksheet filters data from the Budgets Data worksheet based on Category and Time Interval.
+
+1. Column A beginning from row 3 shows time intervals which can be changed using the dropdown menu on cell A1. The options are Monthly, Quarterly, Yearly and By Fiscal Year. The following formula is pasted on cell A3:
+
+```jsx
+=IF(A1="Monthly",SORT(UNIQUE(FILTER('Budgets Data'!E:E,'Budgets Data'!E:E<>"")),1,FALSE),
+    IF(A1="Quarterly",SORT(UNIQUE(FILTER('Budgets Data'!F:F,'Budgets Data'!F:F<>"")),1,FALSE),
+        IF(A1="Yearly",SORT(UNIQUE(FILTER('Budgets Data'!G:G,'Budgets Data'!G:G<>"")),1,FALSE),
+            IF(A1="Weekly",SORT(UNIQUE(FILTER('Budgets Data'!H:H,'Budgets Data'!H:H<>"")),1,FALSE),
+                IF(A1="By Fiscal Year",SORT(UNIQUE(FILTER('Budgets Data'!I:I,'Budgets Data'!I:I<>"")),1,
+                    FALSE),SORT(UNIQUE(FILTER('Budgets Data'!E:E,'Budgets Data'!E:E<>"")),1,FALSE)
+                    )
+            )
+        )
+    )
+)
+```
+
+1. Row 1 beginning from column C shows the all unique Categories from Budgets Data worksheet. The following formula is pasted on cell C1: 
+
+```jsx
+=TRANSPOSE(SORT(UNIQUE(FILTER('Budgets Data'!B:B,'Budgets Data'!B:B<>""))))
+```
+
+1. Column B beginning from row 3 shows the total across categories for each time interval. The following formula is pasted across Column B starting at cell B3:
+
+```jsx
+=IF(ISBLANK($A3),,SUM($C3:3))
+```
+
+1. Row 2 beginning from column B shows a quick graph, using SPARKLINE function, of the data over the 4 most recent time intervals. The graph data is sorted chronologically from left to right. 
+
+<Note>
+An upward slope indicates aggressive budgeting trend.
+</Note>
+
+The following formula is pasted across Row 2 starting at cell B2:
+
+```jsx
+=IF(ISBLANK(B1),,
+    IF(OR(ISBLANK(B3),ISBLANK(B4)),
+        "Lack Data",
+        SPARKLINE(B3:B6,{"rtl",true})
+    )
+)
+```
+
+1. All remainder cells beginning from row 3 to 1000, column C to Z have the following formula pasted in them:
+
+```jsx
+=IFERROR(
+    IF(OR(ISBLANK(C$1),ISBLANK($A3)),,
+        SUM(
+            FILTER('Budgets Data'!$C:$C,
+                C$1='Budgets Data'!$B:$B,
+                IF($A$1="Monthly",$A3='Budgets Data'!$E:$E,
+                    IF($A$1="Quarterly",$A3='Budgets Data'!$F:$F,
+                        IF($A$1="Yearly",$A3='Budgets Data'!$G:$G,
+                            IF($A$1="Weekly",$A3='Budgets Data'!$H:$H,
+                                IF($A$1="By Fiscal Year",$A3='Budgets Data'!$I:$I,
+                                    $A3='Budgets Data'!$E:$E
+                                )
+                            )
+                        )
+                    )
+                )
+            )    
+        )
+    )
+,0)
+```
+
+**Analysis**
+
+This worksheet shows the deviation of your actual transactions from the budgets set by you for each Category and Time Interval. It can show deviation in absolute value or in percentage which can be selected using the dropdown menu in cell A2.
+
+1. Column A beginning from row 3 shows time intervals which can be changed using the dropdown menu on cell A1. The options are Weekly, Monthly, Quarterly, Yearly and By Fiscal Year. The following formula is pasted on cell A3:
+
+```jsx
+=IF(A1="Monthly",SORT(UNIQUE(FILTER('Budgets Data'!E:E,'Budgets Data'!E:E<>"")),1,FALSE),
+    IF(A1="Quarterly",SORT(UNIQUE(FILTER('Budgets Data'!F:F,'Budgets Data'!F:F<>"")),1,FALSE),
+        IF(A1="Yearly",SORT(UNIQUE(FILTER('Budgets Data'!G:G,'Budgets Data'!G:G<>"")),1,FALSE),
+            IF(A1="Weekly",SORT(UNIQUE(FILTER('Budgets Data'!H:H,'Budgets Data'!H:H<>"")),1,FALSE),
+                IF(A1="By Fiscal Year",SORT(UNIQUE(FILTER('Budgets Data'!I:I,'Budgets Data'!I:I<>"")),1,
+                    FALSE),SORT(UNIQUE(FILTER('Budgets Data'!E:E,'Budgets Data'!E:E<>"")),1,FALSE)
+                    )
+            )
+        )
+    )
+)
+```
+
+1. Row 1 beginning from column C shows the all unique Categories from Budgets Data worksheet. The following formula is pasted on cell C1:
+
+```jsx
+=TRANSPOSE(SORT(UNIQUE(FILTER('Budgets Data'!B:B,'Budgets Data'!B:B<>""))))
+```
+
+1. Row 2 beginning from column B shows a quick graph, using SPARKLINE function, of the data over the 4 most recent time intervals. The graph data is sorted chronologically from left to right.
+
+<Note>
+Be mindful when inferring from this graph since the data shows both positive and negative deviations.
+</Note>
+
+The following formula is pasted across Row 2 starting at cell B2:
+
+```jsx
+=IF(ISBLANK(B1),,
+    IF(OR(ISBLANK(B3),ISBLANK(B4)),
+        "Lack Data",
+        SPARKLINE(B3:B6,{"rtl",true})
+    )
+)
+```
+
+1. Column B beginning from row 3 shows the total across categories for each time interval. The following formula is pasted across Column B starting at cell B3:
+
+```jsx
+=IF(ISBLANK($A3),,SUM($C3:3))
+```
+
+1. All remainder cells beginning from row 3 to 1000, column C to Z have the formula shown below pasted in them. They also have conditional formatting on them which shows cells that have value greater than zero in green fill color, value less than zero in red fill color and value equal to zero in yellow fill color.
+
+```jsx
+=IFERROR(
+    IF(OR(ISBLANK(C$1),ISBLANK($A3)),,
+        LET(budgetVar,
+            SUM(
+                FILTER('Budgets Data'!$C:$C,C$1='Budgets Data'!$B:$B,
+                    IF($A$1="Monthly",$A3='Budgets Data'!$E:$E,
+                        IF($A$1="Quarterly",$A3='Budgets Data'!$F:$F,
+                            IF($A$1="Yearly",$A3='Budgets Data'!$G:$G,
+                                IF($A$1="Weekly",$A3='Budgets Data'!$H:$H,
+                                    IF($A$1="By Fiscal Year",$A3='Budgets Data'!$I:$I,
+                                        $A3='Budgets Data'!$E:$E
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            ),
+            LET(transactVar,
+                SUM(
+                    FILTER('Transactions Data'!$F:$F,
+                        C$1='Transactions Data'!$E:$E,
+                        IF($A$1="Monthly",$A3='Transactions Data'!$J:$J,
+                            IF($A$1="Quarterly",$A3='Transactions Data'!$K:$K,
+                                IF($A$1="Yearly",$A3='Transactions Data'!$L:$L,
+                                    IF($A$1="Weekly",$A3='Transactions Data'!$M:$M,
+                                        IF($A$1="By Fiscal Year",$A3='Transactions Data'!$N:$N,
+                                            $A3='Transactions Data'!$J:$J
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )    
+                ),IF($A$2=="Absolute",TO_PERCENT(MINUS(budgetVar,transactVar)),ROUND(DIVIDE(MINUS(budgetVar,transactVar),budgetVar)*100,2))
+            )
+        )
+    )
+,0)
+```
+
+## Tutorial
+
+[https://youtu.be/umNRJZuNmGQ](https://youtu.be/umNRJZuNmGQ)
+
+<Note>
+To set up the automation quickly, go through the video tutorial shown above. The steps given below go through the same process but provide more clarity.
+</Note>
+
+### **Step 1: Setting up Google Drive & Google Sheet Template**
+
+1. Create a folder in your Google Drive and name it Seribro. If you have create one already while setting up the Habit Tracker then you can skip this step.
+2. Open the Seribro Finance Tracker Google Sheet template using the link provided earlier.
+3. Click on File > Make a copy, rename the sheet, and place it inside the Seribro folder.
+
+### Step 2: Understanding the Google Sheet Template
+
+The Finance Tracker Google Sheet template contains five worksheets:
+
+1. Transactions Data: Stores all entries from the Transactions Master Database. Once automation is set up, delete the data in the first seven columns, but keep the first row intact, as it contains important formulas.
+2. Budgets Data: Stores entries from the Budgets Master Database. Similar to the Transactions Data worksheet, delete the first four columns but leave the first row untouched.
+3. Transactions Overview: Organizes transaction entries by category and time interval. You can change the interval (Weekly, Monthly, Quarterly, Yearly, or Fiscal Year) using the dropdown in cell A1. Filter by bank account using cell A2, or clear it to view all accounts.
+4. Budgets Overview: Functions like the Transactions Overview but for budget entries.
+5. Analysis: Compares actual transactions against budgets by category and interval. Results appear green if under budget and red if over. Use the dropdown in cell A2 to switch between absolute values and percentages.
+
+### **Step 3: Setting Up Automation on [Make.com](http://Make.com)**
+
+1. Create an account on Make.com by clicking "Get Started" and completing the survey.
+2. Click Create a new scenario and select the Notion module. Choose Watch Database Items.
+3. Click Create a connection, select Notion Public, and click Save.
+4. Grant access to the Transactions Master Database by clicking Select Pages, searching for Transactions Master Database , and clicking Allow Access.
+5. Under Database ID, search for the Transactions Master Database. Set a limit higher than the maximum daily transactions you expect. Click OK and choose to start from now.
+6. Add another module by clicking the plus icon and selecting Google Sheets.
+7. Choose Add a Row.
+8. Create a connection by signing in with your Google account.
+9. Locate your sheet under Spreadsheet ID and select Transactions Data under Sheet Name.
+10. Map the first 7 fields to the corresponding database properties. These names must match exactly.
+    1. `1. Properties Value: ID`  
+    2. `1. Properties Value: Type: Name` 
+    3. `1. Properties Value.Name[` `]:Text.Content` 
+    4. `1. Properties Value: Date: Start` 
+    5. `1. Properties Value: Category Title: String` 
+    6. `1. Properties Value: Account Title: String` 
+    7. `1. Properties Value: Amount` 
+11. Click Save.
+12. Schedule the automation to run daily—ideally while you're asleep.
+13. Activate the scenario and rename it Transactions Integration.
+
+### Step 4: Setup automation for Budget Entries
+
+1. Go to the Scenarios page or Home page , click Create a new scenario.
+2. Select the Notion module and choose Watch Database Items.
+3. Under Connections, click Add.
+4. Grant access to the Budgets Master Database by clicking Select Pages, searching for Budgets Master Database, and clicking Allow Access.
+5. Under Database ID, search for Budgets Master Database. Ensure an ID appears in the field.
+6. Increase the Limit to handle the maximum number of new budget entries you expect in a day. 
+7. Click the + icon to add another module. Select Google Sheets and choose Add a Row.
+8. Locate your Seribro **Finance Tracker spreadsheet using the Spreadsheet ID field.
+9. Under Sheet Name, select the Budgets Data worksheet.
+10. For the first 4 fields, map the Notion properties exactly as shown in the video:
+    1. `1. Properties Value: ID` 
+    2. `1. Properties Value: Category Title: String` 
+    3. `1. Properties Value: Date: Start` 
+    4. `1. Properties Value: Amount` 
+11. Set the automation to run daily at a time when you're likely asleep. 
+Although, the Google Sheet allows Budget Entries to be created for each week, usually, people do it once every month. Based on your preference you can alter the scheduling for the automation.
+12. Click Activate Scenario, then save it.
+13. Rename the scenario to Budgets Integration for clarity.
+
+<Note>
+You cannot make changes to any of these above mentioned properties in the Transactions & Budgets Master Databases in Notion.
+</Note>
+
+<Note>
+[Make.com](http://Make.com) was chosen because it offers 1000 operations per month for free. Note however that 1 operation is charged for simply checking the trigger. So scheduling the automation to run once a day or once a week/month for the Budgets Master Database will prevent you from crossing the free limit.
+</Note>
+
+### **Step 3: Embedding Sheets in Notion**
+
+1. Open the Transactions Overview worksheet and go to File > Share > Publish to Web.
+2. Select the worksheet, click Publish, then OK and copy the link.
+3. In your Seribro workspace, type `/embed`, paste the link, and resize as needed.
+4. Repeat for the Budgets Overview and Analysis worksheets.
+
+### **Step 4: Visualizing Data with Charts**
+
+1. Create a new worksheet named Charts.
+2. Go to Insert and click Chart
+3. In the Charts Editor, under Chart Type select Line Chart
+4. Under Data Range, use: `'Transactions Data'!A:N` 
+5. For X-axis, keep only column K.
+6. For Series, keep only column I.
+7. Go to the Customize Tab
+8. Remove border color
+9. Under Gridlines and Ticks, uncheck Major Gridlines for both Horizontal and Vertical Axes
+10. For a minimal look, you can disable axis labels entirely by setting Major Count to None. Major Spacing Type must be set to Count in order to do this.
+11. Give the Chart a title under, say Net Worth.
+12. Click the three dots on the chart, select Publish chart, click Publish and then OK.
+13. Copy the link and go to your Seribro Cash Flow page.
+14. Embed it the chart using the /embed block. Resize as needed.
+
+<Note>
+You can create additional charts, like pie charts for spending categories, and embed them similarly.
+
+If you're using Notion in Dark Mode then set the Chart Background Color under Chart Style to `#191919` . You'll need to set the text color under Legends, Horizonal Axis and Vertical Axis sections to white.
+</Note>
+
+# Recurring Entries
+
+Some entries like income and subscriptions are recurring and can be created using the Repeating Templates feature.
+
+Here's how to create a set up a Repeating Template
+
+1. In the Cash Flow page, go to the Recent Transactions or Cash Flow Review database and click the New dropdown, then select New Template.
+2. Configure the following properties:
+    1. Template Name: Enter a name for the entry followed by 'Today' mention
+    2. Type: Enter the type of transaction
+    3. Amount: Enter the value of the transaction
+    4. Category: Assign it to the relevant category.
+    5. Account: Assign the account associated with this transaction.
+    6. Date: Set to "Today - Date when duplicated."
+3. Close the template and go back to the dropdown next to the New button, click the ellipses icon next to the template you just created, and select Repeat.
+4. Choose the repetition interval:
+    1. Daily, Monthly, or Yearly: Specify how often (e.g., every 2 days, every month) you want entries to be created.
+    2. Weekly: Specify the interval and select which days of the week this habit should appear.
+5. Select a Start Date for when you want entries to start being created automatically.
+6. Choose a Time for when each the entry will be generated.
+
+Your entries will now auto-populate in the Transactions Master Database based on your schedule. They'll show up only on the day they're scheduled to be generated, not in advance.
+
+<Note>
+Remember to delete or modify the repeating template when necessary.
+</Note>
+
+# Cash Flow Page
+
+### Overview
+
+The Cash Flow page is a comprehensive dashboard that provides an overview of financial activities, including expenses, deposits, budgets and income. 
+
+## Page Structure
+
+### New Transaction Button
+
+Placed on the top of the page, this button allows you to quickly create a new transaction entry in the Transactions Master Database.
+
+### New Budget Database
+
+Placed below the New Transaction Button, the New Budget Button allows you to set a new budget in the Budgets Master Database.
+
+## →Linked Databases
+
+### 1. Recent Transactions
+
+- Views: This Week & Past Week.
+- Purpose: Shows transactions made in the present and last week.
+- Layout: Table
+- Visible Properties: Name, Date, Type, Amount, Category, Account & Receipt.
+- Filter: Start Date is [this week/ past 1 week] relative to today & Category does not contain Income.
+- Sort: Ascending Date property
+- Group: None
+
+### 2. Budget Review & Planning
+
+- Views: This Month, Past Month & Next Month.
+- Purpose: Shows budgets set for [present/last/next] month.
+    - If you prefer to set Budgets every week then you can change these views to This Week, Past Week & Next Week by changing the filter.
+- Layout: List
+- Visible Properties: Name, Amount & Category. 
+If you have followed the naming scheme as mentioned earlier in the Budgets Master Database documentation section, you can make the Category property invisible.
+- Filter: Start Date is [this/past/next] month relative to today.
+- Sort: Descending Amount property
+- Group: None
+
+### 3. Cash Flow Review
+
+- Views: This Month & Past Month
+- Purpose: Shows transactions made in [present/last] month.
+- Layout: Gallery; Small card size; No card preview
+- Visible Properties: Name.
+- Filter: Start Date is [this/past] 1 month relative to today & Category does not contain Income.
+- Sort: Descending Amount property
+- Group: By Categories; Sorted Alphabetically, Hidden empty groups.
+    - Sum of Value property shown next to Category name.
+
+### 4. All Time Spending
+
+### →Categories
+
+- Purpose: Shows sums of all transactions in each category
+- Layout: Gallery; Medium Card Size; No card preview.
+- Visible Properties: Name & Expense
+- Filter: Name does not contain income.
+- Sort: Descending Sum property.
+- Group: None
+
+### 5. Income
+
+This section is hidden inside a toggle list due to its sensitive information. However you are free to move the contents out.  
+
+### →All time
+
+- Purpose: Shows all the transaction entries linked to Income category
+- Layout: List
+- Visible Properties: Name, Date, Amount & Account
+- Filter: Category contains Income
+- Sort: Descending Date property
+- Group: None
+
+### →Accounts
+
+- Purpose: Shows the balance amount in each bank account.
+- Layout: Gallery; Medium Card Size; No card preview.
+- Visible Properties: Name & Balance
+- Filter: None
+- Sort: Descending Balance property.
+- Group: None
+
+## Conclusion
+
+The Transactions Master Database streamlines financial tracking and analysis through integration with Accounts and Categories, offering detailed and organized record-keeping. The Budgets Master Database simplifies goal-setting and expense management with customizable views and seamless integration with Categories for flexible budgeting. The automation seamlessly connects the Transactions and Budgets Master Databases, ensuring real-time updates and comprehensive insights into financial tracking and budgeting, all in one cohesive system.

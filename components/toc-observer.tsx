@@ -10,6 +10,7 @@ type Props = { data: Awaited<ReturnType<typeof getDocsTocs>> };
 export default function TocObserver({ data }: Props) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
+  const tocRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleIntersect = (entries: IntersectionObserverEntry[]) => {
@@ -21,7 +22,7 @@ export default function TocObserver({ data }: Props) {
 
     observer.current = new IntersectionObserver(handleIntersect, {
       root: null,
-      rootMargin: "-20px 0px 0px 0px",
+      rootMargin: "-60px 0px -40% 0px",
       threshold: 0.1,
     });
 
@@ -46,8 +47,22 @@ export default function TocObserver({ data }: Props) {
     };
   }, [data]);
 
+  useEffect(() => {
+    if (activeId && tocRef.current) {
+      const activeElement = tocRef.current.querySelector(
+        `a[href="#${activeId}"]`
+      );
+      if (activeElement) {
+        activeElement.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }
+    }
+  }, [activeId]);
+
   return (
-    <div className="flex flex-col gap-2.5 text-sm dark:text-stone-300/85 text-stone-800 ml-0.5">
+    <div ref={tocRef} className="flex flex-col gap-2.5 text-sm dark:text-stone-300/85 text-stone-800 ml-0.5">
       {data.map(({ href, level, text }, index) => {
         return (
           <Link

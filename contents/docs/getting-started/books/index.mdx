@@ -1,0 +1,107 @@
+# Books
+
+# Books Master Database
+
+### Overview
+
+The Books Master Database is designed to track and manage information about books.
+
+## Database Schema
+
+### 1. Name (Title Property)
+
+Description: The title of the book.
+
+### 2. Author (Text Property)
+
+The name of the book's author.
+
+### 3. Date Property
+
+Used to record the date when you start reading the book and the end date when you finish.
+
+### 4. Favorite (Checkbox Property)
+
+Allows marking a book as a favorite.
+
+### 5. Rating (Select Property)
+
+Allows rating of books on a scale of 1 to 5 stars.
+
+### 6. Status Property
+
+Tracks the reading status of each book.
+
+Options are:
+
+- Not started
+- In progress
+- Done
+
+### 7. Total Pages (Number Property)
+
+The total number of pages in the book.
+
+### 8. Current Page (Number Property)
+
+Tracks the current page the reader is on in the book. It helps track progress
+
+### 9. Progress (Formula Property)
+
+Calculates the completion of the book based on current page and total pages entered. It is formatted as a percentage and shown as a bar. The Notion formula is as follows:
+
+```jsx
+prop("Current Page")/prop("Total Pages")
+```
+
+### 10. Tags (Multi-select Property)
+
+Allows categorization of books using multiple tags. You can also choose the AI Autofill feature to generate new suggestions for the options.
+
+## Database View
+
+The Books Master Database includes one pre-configured view named All Books.
+
+# Books Page
+
+### Overview
+
+This page has a linked database view of the Books Master Database based on the Status.
+
+## Page Structure
+
+### New Book Button
+
+Placed on top of the page, this button lets you quickly add a new book to the database.
+
+## →Linked Databases
+
+### 1. All Books
+
+### →Reading
+
+- Purpose: Shows books you are currently reading
+- Layout: Table
+- Visible Properties: Name, Current Page, Progress, Status, Date, Rating & Favorite
+- Filter: Status is In Progress
+- Sort: Descending Progress property.
+- Group: None
+
+### →To Read
+
+- Purpose: Shows books you want to read.
+- Layout: Table
+- Visible Properties: Name, Author, Tags, Total Pages, Status & Date
+- Filter: Status is Not Started
+- Sort: Ascending Date Property
+- Group: None
+
+### →Done Reading
+
+- Purpose: Shows books you have read.
+- Layout: Gallery, Small card size, Card preview: Page Cover
+- Visible Properties: Name, Author & Rating
+- Filter: Status is Done
+    - Optional filter: Favorite
+- Sort: Descending Rating property.
+- Group: None 

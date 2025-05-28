@@ -1,174 +1,169 @@
----
-title: Project Structure
-description: This section provides an overview of the project structure.
----
+# Project Structure
 
-## Project Structure Overview
+Understanding the project structure of your Seribro documentation website is key to navigating and customizing it effectively. Built with Next.js, the project follows a standard directory layout, with specific folders dedicated to documentation content, components, and application logic.
 
-### src
+```
+|— app/
+|    |— [[...slug]]/
+|    |    |— page.tsx
+|    |— blog/
+|    |    |— [[...slug]]/
+|    |    |    |— page.tsx
+|    |    |— page.tsx
+|    |    |— layout.tsx
+|    |— docs/
+|    |    |— [[...slug]]/
+|    |    |    |— page.tsx
+|    |— layout.tsx
+|    |— login/
+|    |    |— page.tsx
+|    |— not-found.tsx
+|    |— page.tsx
+|    |— globals.css
+|    |— favicon.ico
+|    |— manifest.json
+|— components/
+|    |— markdown/
+|    |    |— files.tsx
+|    |    |— image.tsx
+|    |    |— index.ts
+|    |    |— link.tsx
+|    |    |— note.tsx
+|    |    |— outlet.tsx
+|    |    |— pre.tsx
+|    |    |— stepper.tsx
+|    |— ui/
+|    |    |— accordion.tsx
+|    |    |— alert-dialog.tsx
+|    |    |— alert.tsx
+|    |    |— aspect-ratio.tsx
+|    |    |— avatar.tsx
+|    |    |— badge.tsx
+|    |    |— button.tsx
+|    |    |— calendar.tsx
+|    |    |— card.tsx
+|    |    |— checkbox.tsx
+|    |    |— collapsible.tsx
+|    |    |— command.tsx
+|    |    |— context-menu.tsx
+|    |    |— dialog.tsx
+|    |    |— dropdown-menu.tsx
+|    |    |— form.tsx
+|    |    |— hover-card.tsx
+|    |    |— input.tsx
+|    |    |— label.tsx
+|    |    |— menubar.tsx
+|    |    |— navigation-menu.tsx
+|    |    |— popover.tsx
+|    |    |— progress.tsx
+|    |    |— radio-group.tsx
+|    |    |— scroll-area.tsx
+|    |    |— select.tsx
+|    |    |— separator.tsx
+|    |    |— sheet.tsx
+|    |    |— skeleton.tsx
+|    |    |— slider.tsx
+|    |    |— switch.tsx
+|    |    |— table.tsx
+|    |    |— tabs.tsx
+|    |    |— textarea.tsx
+|    |    |— toast.tsx
+|    |    |— toaster.tsx
+|    |    |— toggle-group.tsx
+|    |    |— toggle.tsx
+|    |    |— tooltip.tsx
+|    |    |— use-toast.ts
+|    |— docs-breadcrumb.tsx
+|    |— footer.tsx
+|    |— mode-toggle.tsx
+|    |— navbar.tsx
+|    |— pagination.tsx
+|    |— sidebar.tsx
+|    |— toc.tsx
+|    |— typography.tsx
+|— contents/
+|    |— blogs/
+|    |    |— file-rec.mdx
+|    |    |— next-react.mdx
+|    |— docs/
+|    |    |— getting-started/
+|    |    |    |— areas/
+|    |    |    |    |— index.mdx
+|    |    |    |— books/
+|    |    |    |    |— index.mdx
+|    |    |    |— cash-flow/
+|    |    |    |    |— index.mdx
+|    |    |    |— dashboard/
+|    |    |    |    |— index.mdx
+|    |    |    |— debts/
+|    |    |    |    |— index.mdx
+|    |    |    |— guide/
+|    |    |    |    |— index.mdx
+|    |    |    |— habits/
+|    |    |    |    |— index.mdx
+|    |    |    |— investments/
+|    |    |    |    |— index.mdx
+|    |    |    |— more/
+|    |    |    |    |— index.mdx
+|    |    |    |— notes-webclips/
+|    |    |    |    |— index.mdx
+|    |    |    |— project-structure/
+|    |    |    |    |— index.mdx
+|    |    |    |— recipes/
+|    |    |    |    |— index.mdx
+|    |    |    |— seribro/
+|    |    |    |    |— index.mdx
+|    |    |    |— tasks-projects-goals/
+|    |    |    |    |— index.mdx
+|    |    |    |— travel/
+|    |    |    |    |— index.mdx
+|    |    |    |— website-overview/
+|    |    |    |    |— index.mdx
+|    |    |    |— wins/
+|    |    |    |    |— index.mdx
+|— lib/
+|    |— markdown.ts
+|    |— routes-config.ts
+|    |— utils.ts
+|— public/
+|    |— images/
+|    |    |— Seribro_-_Database_Relationsv2.jpg
+|    |— next.svg
+|    |— vercel.svg
+|— .eslintrc.json
+|— .gitignore
+|— README.md
+|— next-env.d.ts
+|— next.config.mjs
+|— package.json
+|— pnpm-lock.yaml
+|— postcss.config.js
+|— tailwind.config.ts
+|— tsconfig.json
 
-This folder contains the main application source code, including pages, components, and utility functions. It is structured to support scalable development with modularized sections.
+## Core Directories
 
-<Files
-  items={[
-    {
-      type: "folder",
-      name: "src",
-      isOpen: true,
-      children: [
-        { type: "file", name: "main.tsx" },
-        { type: "file", name: "index.tsx" },
-        {
-          type: "folder",
-          name: "pages",
-          children: [
-            { type: "file", name: "home.tsx" },
-            { type: "file", name: "about.tsx" },
-            {
-              type: "folder",
-              name: "blog",
-              children: [{ type: "file", name: "[slug].tsx" }],
-            },
-          ],
-        },
-        {
-          type: "folder",
-          name: "layouts",
-          children: [{ type: "file", name: "main-layout.tsx" }],
-        },
-      ],
-    },
-  ]}
-/>
+*   **`app/`**: This is the main application directory following Next.js 13+ App Router conventions. It contains all your routes, server components, and UI. Key subdirectories here include:
+    *   `app/docs/`: Contains the dynamic route for rendering documentation pages based on the slug.
+    *   `app/blog/`: (If applicable) Contains the dynamic route for rendering blog pages.
+    *   `app/login/`: Contains the login page.
+*   **`components/`**: Houses all reusable React components, divided into:
+    *   `components/markdown/`: Custom components used within your MDX files (like `Note`, `Tabs`, `Stepper`).
+    *   `components/ui/`: UI components, likely using a library like Shadcn UI.
+*   **`contents/`**: Stores your documentation and blog content written in MDX format.
+    *   `contents/docs/`: Contains all your documentation files, organized into subdirectories mirroring your sidebar navigation structure.
+    *   `contents/blogs/`: (If applicable) Contains your blog post files.
+*   **`lib/`**: Includes utility functions, markdown processing logic, and route configurations.
+    *   `lib/markdown.ts`: Handles parsing and processing of MDX files.
+    *   `lib/routes-config.ts`: Defines the structure and links for your sidebar navigation.
+*   **`public/`**: For static assets like images, fonts, and the favicon.
 
-### ui-components
+## Key Files
 
-This folder contains all reusable UI components used across the application, making it easy to manage design consistency and modular functionality.
+*   **`package.json`**: Manages project dependencies and scripts.
+*   **`next.config.mjs`**: Next.js configuration file.
+*   **`.env.local`**: Environment variables (for things like API keys).
+*   **`tailwind.config.ts`**: Tailwind CSS configuration.
+*   **`tsconfig.json`**: TypeScript configuration.
 
-<Files
-  items={[
-    {
-      type: "folder",
-      name: "ui-components",
-      isOpen: true,
-      children: [
-        { type: "file", name: "button.tsx" },
-        { type: "file", name: "card.tsx" },
-        {
-          type: "folder",
-          name: "inputs",
-          children: [
-            { type: "file", name: "text-input.tsx" },
-            { type: "file", name: "checkbox.tsx" },
-          ],
-        },
-      ],
-    },
-  ]}
-/>
-
-### styles
-
-This folder contains all global and component-specific styling, ensuring consistency across the application with CSS or Tailwind configuration.
-
-<Files
-  items={[
-    {
-      type: "folder",
-      name: "styles",
-      isOpen: true,
-      children: [
-        { type: "file", name: "global.css" },
-        { type: "file", name: "theme.css" },
-      ],
-    },
-  ]}
-/>
-
-### content
-
-This folder holds all Markdown content used for static pages, documentation, or blogs. Each Markdown file represents a single page or article.
-
-<Files
-  items={[
-    {
-      type: "folder",
-      name: "content",
-      isOpen: true,
-      children: [
-        {
-          type: "folder",
-          name: "docs",
-          children: [
-            { type: "file", name: "installation.md" },
-            { type: "file", name: "configuration.md" },
-          ],
-        },
-        {
-          type: "folder",
-          name: "blog",
-          children: [
-            { type: "file", name: "first-post.md" },
-            { type: "file", name: "changelog.md" },
-          ],
-        },
-      ],
-    },
-  ]}
-/>
-
-### assets
-
-This folder contains all static files such as images, icons, and fonts that are required in the application.
-
-<Files
-  items={[
-    {
-      type: "folder",
-      name: "assets",
-      isOpen: true,
-      children: [
-        {
-          type: "folder",
-          name: "images",
-          children: [
-            { type: "file", name: "logo.svg" },
-            { type: "file", name: "background.png" },
-          ],
-        },
-        {
-          type: "folder",
-          name: "icons",
-          children: [{ type: "file", name: "menu.svg" }],
-        },
-      ],
-    },
-  ]}
-/>
-
-### utils
-
-This folder contains helper functions and reusable utilities that simplify common operations such as API requests, formatting, and validation.
-
-<Files
-  items={[
-    {
-      type: "folder",
-      name: "utils",
-      isOpen: true,
-      children: [
-        { type: "file", name: "api.ts" },
-        { type: "file", name: "format.ts" },
-        { type: "file", name: "validators.ts" },
-      ],
-    },
-  ]}
-/>
-
-### Additional
-
-- **`package.json`**: Defines project metadata, dependencies, and scripts for running and building the application.
-- **`vite.config.ts`**: Configuration file for Vite, specifying project settings and optimizations.
-- **`tsconfig.json`**: TypeScript configuration file that ensures proper compilation settings.
-
-This project structure ensures modularity, maintainability, and scalability, making it easier to manage large-scale applications efficiently.
+Understanding this structure will help you locate files for editing, adding new content, or troubleshooting. The documentation content you add in `contents/docs/` will be dynamically rendered by the `app/docs/[[...slug]]/page.tsx` route based on the configuration in `lib/routes-config.ts`. 

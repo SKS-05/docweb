@@ -1,0 +1,387 @@
+# Debts
+
+Seribro's ancillary finance system has 2 databases for tracking debt - Debt Master Database and Debt Repayments Database. This feature is made specifically for monthly **amortized** debts.
+
+# Debts Master Database Documentation
+
+## Overview
+
+The Debts Master Database is a comprehensive system designed to track and manage various types of debts or loans. This database serves as a central repository for all debt-related information, allowing users to monitor loan amounts, payment schedules, and associated details.
+
+## Database Schema
+
+The Debts Master Database includes the following properties:
+
+### 1. Name (Title Property)
+
+This is the primary identifier for each debt entry. It should contain a brief, descriptive title of the debt or loan.
+
+### 2. Loan Amount (Number Property)
+
+Represents the total amount of the loan or debt. This property is formatted in US dollars.
+
+### 3. Interest per Annum (Number Property)
+
+Represents the annual interest rate for the debt. This property is formatted as a percentage, allowing for accurate interest calculations.
+
+### 4. Interest per Month (Formula Property)
+
+Calculates the interest per month by dividing Interest per Annum by 12. It is formatted as a percentage.
+
+The Notion formula is as follows:
+
+```jsx
+round((prop("Interest per Annum")/12)*1000000)/1000000
+```
+
+### 5. Initial Repayment Date (Date Property)
+
+Specifies the date when the first repayment is due. This helps in tracking the start of the repayment period.
+
+### 6. Down Payment (Number Property)
+
+Indicates the initial payment made towards the debt. Like the Loan Amount, this is also formatted in US Dollars. 
+
+### 7. Minimum Repayment (Number Property)
+
+Indicates the minimum amount required for each repayment period. It is formatted in US Dollars. 
+
+### 8. Repayments (Relation Property)
+
+This property creates a relation to the Debt Repayments database allowing users to link each repayment to a debt entry. This is a one-to-many relationship meaning a debt can be associated with multiple repayment entries. The synced property name in the Repayments Database is "Loan".
+
+### 9. Total Amount Repaid (Rollup Property)
+
+Calculates the sum of all Paid Amount properties across all linked Repayments in the Debt Repayments Database using rollup.
+
+### 10. Total Principal Repaid (Rollup Property)
+
+Calculates the sum of all Paid Principal properties across all linked Repayments in the Debt Repayments Database using rollup.
+
+### 11. Total Interest Repaid (Rollup Property)
+
+Calculates the sum of all Paid Interest properties across all linked Repayments in the Debt Repayments Database using rollup.
+
+### 12. Progress (Formula Property)
+
+Calculates the percentage of loan repaid and shows it as a progress bar.
+
+The Notion formula is as follows: 
+
+```jsx
+round((prop("Total Amount Repaid")/prop("Loan Amount"))*1000)/1000
+```
+
+### 13. Net Outstanding Loan (Formula Property)
+
+Shows the amount that needs to be repaid after factoring-in the down payment. This property is formatted in US Dollars.
+
+The Notion formula is as follows:
+
+```jsx
+prop("Loan Amount")-prop("Down Payment")
+```
+
+### 14. Outstanding Amount (Formula Property)
+
+Calculates the total amount yet to be repaid after taking all the repayments already made in to account. The Notion formula is as follows:
+
+```jsx
+prop("Loan Amount")-prop("Total Amount Repaid")-prop("Down Payment")
+```
+
+### 15. Expected Debt Duration (Formula Property)
+
+Calculates the time it will take to repay the debt in years & months based on the standard details provided. The Notion formula is as follows:
+
+```jsx
+let(
+    duration, 
+    /* Declares `duration` to calculate the total loan duration in months. */
+    -log10(1 - prop("Interest per Month") * (prop("Loan Amount") - prop("Down Payment")) / prop("Minimum Repayment")) / log10(1 + prop("Interest per Month")),
+    /* Uses a formula to calculate the loan duration based on interest rate, loan amount, down payment, and minimum repayment. */
+
+    let(
+        quo, 
+        floor(divide(duration, 12)), 
+        /* Calculates the whole years by dividing the duration by 12 and taking the floor. */
+
+        let(
+            rem,   
+            ceil(mod(duration, 12)),
+            /* Calculates the remaining months by taking the modulus of duration divided by 12. */
+
+            if(
+                duration > 12,
+                quo + "y " + rem + "m", 
+                /* If duration is more than 12 months, formats the result as "Xy Ym" (years and months). */
+
+                if(duration > 0, rem + "m", "") 
+                /* If duration is less than 12 months, shows only the months. Returns an empty string if duration is 0. */
+            )
+        )
+    )
+)
+
+```
+
+### 16. Expected Debt Free Data (Formula Property)
+
+Based on the loan details, this property calculates the Date on which you are expected to be debt free.
+
+The Notion formula is as follows:
+
+```jsx
+let(
+    days, 
+    /* Declares `days` to calculate the total loan duration in days. */
+
+    -log10(1 - prop("Interest per Month") * (prop("Loan Amount") - prop("Down Payment")) / prop("Minimum Repayment")) * 30.436875 / log10(1 + prop("Interest per Month")),
+    /* Calculates the loan duration in days using interest rate, loan amount, down payment, and minimum repayment. 
+       Multiplies by 30.436875 (average days in a month) to convert months into days. */
+
+    dateAdd(
+        prop("Initial Repayment Date"), 
+        round(days), 
+        "days"
+    )
+    /* Adds the rounded number of calculated days to the "Initial Repayment Date" and returns the resulting date. */
+)
+
+```
+
+### 17. Loan Amt (Formula Property)
+
+Used to show the Loan Amount with a label in Gallery view. You may need to change the currency symbol in the formula.
+
+The Notion formula is as follows:
+
+```jsx
+style("Loan Amount: ","gray")+"$"+prop("Loan Amount")
+```
+
+### 18. Interest (Formula Property)
+
+Used to show to the interest per annum with a label in Gallery view.
+
+The Notion formula is as follows:
+
+```jsx
+style("Interest Rate: ","gray")+(prop("Interest per Annum")*100)+"%"
+```
+
+### 19. Amount Repaid (Formula Property)
+
+Used to show the Total Amount Repaid with a label in Gallery view. You may need to change the currency symbol in the formula.
+
+The Notion formula is as follows:
+
+```jsx
+style("Amount Repaid: ","gray")+"$"+prop("Total Amount Repaid")
+```
+
+### 20. Debt Free Date (Formula Property)
+
+Used to show the Expected Debt Free Date with a label in Gallery view.
+
+The Notion formula is as follows:
+
+```jsx
+style("Debt free on ","gray")+format(prop("Expected Debt Free Date"))
+```
+
+### 21. Archived (Checkbox Property)
+
+Used to remove debt entries from active view without deletion.
+
+### 22. Created Time Property
+
+Automatically records when the debt entry was created in the database.
+
+## Database Views
+
+The Debts Master Database includes one pre-configured view named All Debt
+
+# Debt Repayment Database Documentation
+
+## Overview
+
+The Debt Repayments Database is a comprehensive system designed to track and manage debt repayments. It serves as a central repository for recording various aspects of loan instalments, providing a detailed view of debt management within the system. This database is made into a task database so that Notion Calendar shows entries on Dates of Repayment.
+
+## Database Schema
+
+The Debt Repayments Database includes the following properties:
+
+### 1. Name (Title Property)
+
+This is the primary identifier for each repayment entry. You can simply name it according to the loan name followed by the repayment/instalment number.
+
+### 2. Loan (Relation Property)
+
+This property creates a relation to Debts Master Database. It allows users to link each repayment to a specific loan, providing context and showing the repayment history for each debt. This is a many-to-one relationship, meaning each repayment can only be associated with one loan. The synced property name in the Loans database is "Repayments".
+
+### 3. Interest per annum (Rollup Property)
+
+Shows the Interest per annum of the linked Loan entry, as a number, using rollup.
+
+### 4. Minimum Repayment (Rollup Property)
+
+Shows the Minimum Repayment amount of the linked Loan entry, as a number, using rollup.
+
+### 5. Assignee Property
+
+Used to enable the Tasks Database feature so that repayments show up in the Home page and in Notion Calendar so that you are reminded to make payment.  
+
+### 6. Interval in months (Number Property)
+
+Indicates the frequency at which payments are made in multiple of months.
+
+### 7. Instalment Number (Number Property)
+
+Indicates the sequential number of the instalment.
+
+### 8. Due Date (Date Property)
+
+Records the date when the repayment is due. This helps in tracking payment deadlines and managing timely repayments. You can also set reminders so that you are notified.
+
+### 9. Opening Balance (Number Property)
+
+Indicates the outstanding balance at the beginning of the repayment period. This property is formatted in US Dollars.
+
+### 10. Instalment Amount (Number Property)
+
+Records the amount for the current repayment. It's formatted in US Dollars. 
+
+### 11. Closing Balance (Formula Property)
+
+Calculates the outstanding amount for the next repayment period by subtracting the paid principal amount in the current instalment from the current opening balance. The Notion formula is as follows:
+
+```jsx
+if(prop("Paid")=="Done",prop("Opening Balance")-prop("Paid Principal"),toNumber(""))
+```
+
+### 12. Principal (Formula Property)
+
+Calculates the principal amount paid in the current instalment/repayment. The Notion formula is as follows:
+
+```jsx
+if(empty(prop("Instalment Amount")),toNumber(""),prop("Instalment Amount")-prop("Interest"))
+```
+
+### 13. Interest (Formula Property)
+
+Calculates the Interest to be paid for the current instalment/repayment using the Interest Rate property mention above assuming the instalments. The Notion formula is as follows:
+
+```jsx
+if(or(empty(prop("Opening Balance")),empty(prop("Interval in months"))),toNumber(""),round(prop("Opening Balance")* (prop("Interest per annum")/12)*prop("Interval in months")*100) /100)
+```
+
+### 14. Paid (Status Property)
+
+A Boolean property that allows users to mark whether the repayment has been made. When checked other formula properties are calculated.
+
+### 15. Paid Principal (Formula Property)
+
+Shows the previously calculated principal amount if the Paid status is Done.
+
+The Notion formula is as follows:
+
+```jsx
+if(prop("Paid")=="Done",prop("Principal"),toNumber(""))
+```
+
+### 16. Paid Interest (Formula Property)
+
+Shows the previously calculated interest amount if the Paid status is Done.
+
+The Notion formula is as follows:
+
+```jsx
+if(prop("Paid")=="Done",prop("Interest"),toNumber(""))
+```
+
+### 17. Paid Total Amount (Formula Property)
+
+Shows the instalment amount if the Paid status is Done.
+
+The Notion formula is as follows:
+
+```jsx
+if(prop("Paid")=="Done",prop("Instalment Amount"),toNumber(""))
+```
+
+### 18. Date Paid (Date Property)
+
+Shows the Date on which the payment was made.
+
+### 19. Paid Today button
+
+This button can be used to automate most parts of this database. Here is a detailed list of actions it performs when clicked:
+
+1. Sets Paid status to Done.
+2. Triggers Date Paid property to current Date.
+3. If the Instalment Amount field is empty when this button is clicked, it will assign the Minimum Repayment rollup property as the Instalment Amount.
+4. It creates a new page in the Debt Repayments Database with the following properties:
+    1. Sets Name to Name of the linked Loan entry followed by incremented instalment number
+    2. Sets an incremented instalment number
+    3. Sets the Opening Balance to the Closing Balance of the previous page
+    4. Sets the Due Date based on the Interval in Months property
+    5. Sets the Assignee to Whoever clicked the button
+
+<Note>
+You will need to enter the very first repayment entry for any given loan. Make sure to link the Loan entry in the Debt Master Database and enter Opening Balance, Interval in Months & Assignee properties for the first entry.
+</Note>
+
+### 20. Paid Label (Formula Property)
+
+Used to show the payment status as a label.
+
+The Notion formula is as follows:
+
+```jsx
+if(prop("Paid")=="Done",style("Paid","green","c","b","green_background"),style("Unpaid","red","c","b","red_background"))
+```
+
+### 21. Last Edited Time Property
+
+Automatically updates when the repayment entry is modified. This helps in tracking the most recent changes to each entry.
+
+### Database Views
+
+The Debt Repayments Database includes All Repayments view 
+
+# Debts Page
+
+### Overview
+
+The Debt page is a comprehensive dashboard that provides an overview of debts and recent repayments. The page is structured with various database views from the Debts Master Database and Debt Repayments Database.
+
+# Page Structure
+
+### New Loan Button
+
+On the top of the page is the New Loan button that let's you quickly create a new entry in the Debt Master Database.
+
+## →Linked Databases
+
+### 1. All Debts
+
+- Purpose: Shows all debts in the Debts Master Database
+- Layout: Gallery; Medium card size; No card preview
+- Visible Properties: Name, Loan Amt, Interest, Amount Repaid, Progress, Debt Free Date
+- Filter: Archived is unchecked
+- Sort: Descending Loan Amount property
+- Group: None
+
+### 2. Recent & Upcoming Repayments
+
+- Purpose: Shows all recent and upcoming repayments in the Debts Repayment Database
+- Layout: List
+- Visible Properties: Name, Paid Label, Instalment Amount, Due Date, Paid today button
+- Filter: Date paid is in the past 1 month relative to today & Paid status is Not Started.
+- Sort: Descending Due Date property
+- Group: By Loan relation
+
+## Conclusion
+
+The Debts Master Database helps track and manage debts, providing insights for better financial decisions. The Debt Repayments Database, integrated with the Loans Database, offers detailed monitoring of repayment schedules and progress, aiding in effective debt management and financial planning.

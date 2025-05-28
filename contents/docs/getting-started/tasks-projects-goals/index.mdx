@@ -1,0 +1,1293 @@
+# Tasks, Projects & Goals
+
+# Tasks Master Database Documentation
+
+## Overview
+
+The Tasks Master Database is a core component of Seribro, designed to manage various types of tasks, projects, and goals. It serves as a comprehensive Task & Project Management system while also helping track long-term goals.
+
+## Key Features
+
+### **1. Comprehensive Task Management**
+
+Handles tasks, projects, and goals in a single system, allowing for efficient organization across different levels of complexity and time frames.
+
+### **2. Hierarchical Organization**
+
+Utilizes 'Parent Task' and 'Child Task' relations to create hierarchies, allowing for sub-tasks, sub-projects, and sub-goals.
+
+<Note>
+Sub-goals will henceforth be known as Milestones.
+</Note>
+
+### **3. GTD Methodology Integration**
+
+Incorporates Getting Things Done (GTD) principles with options like Backlog, Snooze, Delegate, and Do Next for effective task prioritization.
+
+### **4. Multi-dimensional Prioritization**
+
+Includes properties for Difficulty, Priority, and Time-Sensitivity to help users prioritize their work effectively.
+
+### **5. Note Integration**
+
+Connects tasks to related notes in a Notes Master Database, facilitating knowledge management alongside task tracking.
+
+## Database Schema
+
+The Tasks Master Database includes the following properties:
+
+### 1. Name (Title Property)
+
+This is the primary identifier for each task, project, or goal entry.
+
+### 2. Type (Select Property)
+
+Categorizes the entry into different types. Options include:
+
+- Task: The most actionable unit of work.
+- Project: A collection of task with a plan or design.
+- Goal: An objective to be accomplished eventually.
+
+### 3. Status (Status Property)
+
+Indicates the current state of the task, project, or goal. Options are grouped into categories:
+
+### To-do:
+
+- Not started: Task has been created but work has not yet begun.
+- Parked: Task is temporarily set aside, often due to external factors or changing priorities.
+- Revise: Task needs to be redone or modified before proceeding.
+
+### In progress:
+
+- Ongoing: Task is currently being worked on actively.
+- Review: Task is completed but needs to be checked or approved before being marked as done.
+
+### Complete:
+
+- Done: Task has been finished and all requirements have been met.
+- Aborted: Task has been cancelled or terminated before completion.
+
+### 4. Date (Date Property)
+
+Used to set deadlines or due dates for tasks, projects, or goals. It is recommended to also enter a scheduled time when possible, by toggling 'Include time' in the popup.
+
+By Notion default, all dates are of a start date type. Since, conventionally, a due date is considered more important, Seribro is built assuming that the start date IS the due date since entering a single date in Notion Date property is a frictionless experience. However you are free to assume otherwise. Better yet, you can enter a date range i.e. both a Start Date and an End Date, by toggling the End Date option when creating a date entry. 
+
+### 5. Assignee (Person Property)
+
+Allows multiple people to be assigned to a task, project, or goal. This property is added only to allow for this database to be considered as a Task Database. 
+
+<Note>
+A task database in Notion is a type of database that requires a status, assignee, and due date property to help you track the work that you need to get done. Tasks will show up in Home when they are assigned to you in a Task type database. You may need to enable the My Tasks widget by clicking the ellipses icon in the top right corner of Home.
+</Note>
+
+All the templates associated with the Tasks Master Database make you the assignee by default so you don't have to do this manually, as long as you use the provided templates. You can make your own templates do this by editing the Assignee property to "Person who duplicated page" shortcut.
+
+### 6. Processed (Checkbox Property)
+
+Indicates whether the entry has been reviewed or acted upon.  When unchecked new Tasks, Projects and Goals remain in their Inbox view on their respective pages. Make sure to assign all relevant properties before checking off this property. 
+
+### 7. Favorite (Checkbox Property)
+
+Allows users to mark important or frequently accessed items. Primarily meant for projects and goals to show up in the Favorites view on their respective pages. 
+
+### 8. Archived (Checkbox Property)
+
+Used to remove tasks, projects and goals from any of the view on their respective pages without deletion. Archived tasks, projects and goals can still be found in the Archived views of the Tasks Master Database.
+
+### 9. Parent Task (Relation Property)
+
+Enables hierarchical organization by linking to tasks to projects and goals, and projects to goals within the database. It is also used to create sub-tasks, sub-projects and milestones under tasks, projects and goals respectively. This is a many-to-one relation.
+
+### 10. Child Task (Relation Property)
+
+The inverse of Parent Task, showing which tasks, sub-tasks, projects, sub-project or milestones, as applicable, a given entry is nesting. This is a one-to-many relation, allowing multiple sub-tasks to be associated with a parent task.
+
+### 11. Root Task (Rollup Property)
+
+Displays the top-level task, project or goal associated with this task, derived from the Task relation.
+
+### 12. GTD (Select Property)
+
+Implements Getting Things Done (GTD) methodology. Options include:
+
+- Archive: If this is the end decision of practicing GTD, then use the Archived Checkbox property to archive the task
+- Backlog: Represents the "Someday" list in GTD. These are tasks or ideas you're committed to revisiting but don't have a specific timeline for yet.
+- Make Note: Delete the Task entry and create a new entry in the Notes Master Database with the same information.
+- Make Project: Simply turn the task Type into a project and then you can begin project planning to get to actionable items.
+- Do Now: After selecting this property, change the Status of your task to Ongoing and act on it.
+- Delegate: Tasks that are urgent but can be done by someone else. You're responsible for follow-up, but not direct execution.
+- Schedule: If this is the option, then simply assign a Date property to the task based on when you want to start working on it.
+- Do Next: High-priority tasks ready to be acted upon. These are the items you've committed to working on in the immediate future.
+
+<Note>
+Backlog, Delegate and Do Next options have a dedicated linked databases or views in the Tasks page. All the other GTD actions can be done using other features of the Tasks Master Database. If a task needs to be turned into a note, then simply do so with the Note Database
+</Note>
+
+### 13. Delegated To (Text Property)
+
+Specifies the person or entity to whom the task has been assigned if delegated. Tasks will show up in the Delegated Tasks view on the Tasks page.
+
+This is text property because we assume you will be using Seribro in a private space and you can use it to simply type the name of the person you delegated the task to. If you choose to use it with a team then we suggest deleting this property and simply using the 'Assignee' property.
+
+### 14. Difficulty (Select Property)
+
+Indicates the complexity or effort level of the task, project, or goal. Options include:
+
+- Hard
+- Normal
+- Easy
+
+### 15. Priority (Select Property)
+
+Assigns importance levels to tasks, projects, or goals. Options include:
+
+- Crucial
+- Substantial
+- Negotiable
+
+### 16. Time-Sensitivity (Select Property)
+
+Indicates the urgency of the task, project, or goal. Options include:
+
+- Urgent
+- Planned
+- Eventual
+
+<Note>
+While the GTD method is supposed to help you with immediate action, the above 3 properties are supposed to help you prioritize projects and goals. You can modify them if you prefer it.
+</Note>
+
+### 17. Progress (Rollup Property)
+
+Shows a progress bar and percentage progress of a Parent task based on completed Child tasks using Rollup.
+
+### 18. Area (Relation Property)
+
+Links the entry to an Area in the Areas Database, allowing for categorization by life area or topic. This is a many-to-one relation, although if there are exceptional cases then you can manually change it to a many-to-many relation by going to the Tasks Master Database and editing this property to have No Limit. The synced property name in the Areas Master Database is "Tasks".
+
+### 19. Parent Task Area (Rollup Property)
+
+Indicates the area of the parent task, if applicable.
+
+### 20. Parent Task Date (Rollup Property)
+
+Shows the Date of the linked parent task.
+
+### 21. Parent Task Type (Rollup Property)
+
+Shows the Type of the linked parent task.
+
+### 22. Parent Task Status (Rollup Property)
+
+Shows the Status of the linked parent task.
+
+### 23. Root Area (Rollup Property)
+
+Shows the highest-level area related to this note, rolled up from the Area relation.
+
+### 24. Notes (Relation Property)
+
+Links the entry to related notes in the Notes Master Database. This is a many-to-many relation. The synced property name in the Notes Master Database is "Tasks".
+
+### 25. Pulled Notes (Relation Property)
+
+Allows notes that are not directly related to reference this task. This is a many-to-many relation. The synced property name in the Notes Master Database is "Pulling Task".
+
+### 26. Pulled Notes Area (Rollup Property)
+
+Shows the areas that the pulled notes are assigned, rolled up from Pulled Notes.
+
+### 27. Win (Relation Property)
+
+Connects the entry to a Win in the Wins Database. It is mainly meant for goals to be linked to wins. This is a many-to-one relation. The synced property name in the Wins Master Database is "Goal".
+
+### 28. Habits (Relation Property)
+
+Connects the entry to a habit in the Habits Database. It is mainly meant for goals to be linked to habits. This is a one-to-many relation. The synced property name in the Habits Master database is "Goal".
+
+### 29. Habit Progress (Rollup Property)
+
+Shows a progress bar and percentage progress of a Habit Goal based on completed Habit entries using Rollup.
+
+### 30. Habit Count (Rollup Property)
+
+Shows the total number of Habit entries created for a given Habit Goal using the Rollup.
+
+### 31. Quarter (Formula Property)
+
+Calculates the Quarter and Year a task is due based on the Date property ex: March 12, 2025 gives Q1 2025. It is mainly used to create long-term goals in the Goals page.
+
+Following is the Notion formula for this property:
+
+```jsx
+if(
+    empty(prop("Date")), /* Check if the Date property is empty */
+    "", /* Return an empty string if the Date is empty */
+    
+    let(
+        Quarter, ceil(month(prop("Date")) / 3), /* Calculate the quarter by dividing the month by 3 and rounding up */
+        
+        "Q" + Quarter + " " + year(prop("Date")) + /* Construct the output with the quarter and year */
+        
+        if(
+            year(prop("Date")) == year(today()), /* Check if the year of the date is the current year */
+            if(
+                Quarter == ceil(month(today()) / 3), /* Check if the quarter is the current quarter */
+                " - Current", /* Add " - Current" if it is the current quarter */
+                ""
+            ),
+            ""
+        )
+    )
+)
+```
+
+### 32. Last edited time
+
+Automatically updates when the entry is modified. Used in sorting and grouping tasks, projects and goals in various views on their respective pages.
+
+### 33. Edited (Formula Property)
+
+A formula property used to show the time passed since the note or web clip was last edited in a neat way. It is calculated using the Last edited time property mentioned above.
+
+Following is the Notion formula of this property:
+
+```jsx
+let(
+    lastEdited, prop("Last edited time"), /* Store the last edited time property in a variable */
+    
+    let(
+        now, now(), /* Get the current time */
+        
+        let(
+            years, dateBetween(now, lastEdited, "years"), /* Calculate the difference in years */
+            
+            let(
+                months, dateBetween(now, lastEdited, "months"), /* Calculate the difference in months */
+                
+                let(
+                    days, dateBetween(now, lastEdited, "days"), /* Calculate the difference in days */
+                    
+                    let(
+                        monthsRemaining, dateBetween(dateSubtract(now, years, "years"), lastEdited, "months"), /* Calculate remaining months after full years */
+                        
+                        let(
+                            daysRemaining, dateBetween(dateSubtract(now, months, "months"), lastEdited, "days"), /* Calculate remaining days after full months */
+                                
+                            if(
+                                dateBetween(now, lastEdited, "years") < 1, /* Check if less than a year */
+                                
+                                if(
+                                    dateBetween(now, lastEdited, "months") < 1, /* Check if less than a month */
+                                    format(days) + "d", /* Output days */
+                                    
+                                    format(months) + "m, " + format(daysRemaining) + "d" /* Output months and remaining days */
+                                ),
+                                
+                                format(years) + "y, " + format(monthsRemaining) + "m, " + format(daysRemaining) + "d" /* Output years, remaining months, and days */
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    )
+).style("c","b","blue","blue_background") /* Apply styles to the output */
+
+```
+
+### 34. Created time
+
+Automatically records when the entry was created. Used in sorting and grouping tasks, projects and goals in various views on their respective pages.
+
+### 35. Created (Formula Property)
+
+A formula property used to show the time passed since the note or web clip was created in a neat way. It is calculated using the Created time property mentioned above.
+
+Following is the Notion formula of this property:
+
+```jsx
+let(
+    created, prop("Created time"), /* Store the Created time property in a variable */
+    
+    let(
+        now, now(), /* Get the current time */
+        
+        let(
+            years, dateBetween(now, created, "years"), /* Calculate the difference in years */
+            
+            let(
+                months, dateBetween(now, created, "months"), /* Calculate the difference in months */
+                
+                let(
+                    days, dateBetween(now, created, "days"), /* Calculate the difference in days */
+                    
+                    let(
+                        monthsRemaining, dateBetween(dateSubtract(now, years, "years"), created, "months"), /* Calculate remaining months after full years */
+                        
+                        let(
+                            daysRemaining, dateBetween(dateSubtract(now, months, "months"), created, "days"), /* Calculate remaining days after full months */
+                                
+                            if(
+                                dateBetween(now, created, "years") < 1, /* Check if less than a year */
+                                
+                                if(
+                                    dateBetween(now, created, "months") < 1, /* Check if less than a month */
+                                    format(days) + "d", /* Output days */
+                                    
+                                    format(months) + "m, " + format(daysRemaining) + "d" /* Output months and remaining days */
+                                ),
+                                
+                                format(years) + "y, " + format(monthsRemaining) + "m, " + format(daysRemaining) + "d" /* Output years, remaining months, and days */
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    )
+).style("c","b","green","green_background") /* Apply styles to the output */
+
+```
+
+<Note>
+The below 11 properties are used only for time tracking, allowing you to quantify your productivity. The workflow to use them is explained later under the [→ Time Tracker](Tasks,%20Projects%20&%20Goals%2014ef1b29a6d481a6b729fafcae61ad59.md)  section of the Tasks Page part of this documentation.
+</Note>
+
+### 36. Original (Relation Property)
+
+This property is a renamed Parent Task property under the Sub-tasks feature of Notion Database. In Seribro, it is used for Time Tracking of tasks by nesting sessions of work under the original task. There is no need to interact with this property at all. Make sure its hidden from all views.
+
+### 37. Sessions (Relation Property)
+
+This property is a renamed Sub-task property under the Sub-tasks feature of Notion Database. In Seribro, it allows nesting of intervals of work or sessions under the main task or Original. Each session of work can then be time tracked using the below properties. There is no need to interact with this property at all. Make sure its hidden from all views.
+
+### 38. Start Time (Date Property)
+
+This is used to record the starting time of a session or interval of work.
+
+### 39. End Time (Date Property)
+
+This is used to record the ending time of a session or interval of work.
+
+### 40. Start (Button Property)
+
+Triggers the Start Time property when clicked.
+
+### 41. End (Button Property)
+
+Triggers the End Time property when clicked.
+
+### 42. Time Difference (Formula Property)
+
+Calculated the difference between the End Time and Start Time. It is essentially the time tracked for each session.
+
+Following is the Notion formula of this property:
+
+```jsx
+dateBetween(prop("End Time"), prop("Start Time"), "minutes")
+
+/* Calculates the difference between Start Time and End Time in minutes */
+```
+
+### 43. Total Time Tracked
+
+Calculates the sum of all tracked time for all sessions or intervals of work.
+
+Following is the Notion formula of this property:
+
+```jsx
+let(
+  timetracked, map(prop("Sessions"), current.prop("Time Difference")).sum(), 
+  /* Assigns the sum of "Time Difference" from each session to 'timetracked'. */
+
+  if(timetracked == 0, "", timetracked)
+  /* If 'timetracked' is 0, returns an empty string, otherwise returns 'timetracked'. */
+)
+```
+
+### 44. Time Estimate (hh:mm) (Text Property)
+
+It is an estimate entered before a task in begun to indicate how long the task is expected to take. It must be entered in the format hh:mm (hours : minutes). It can also be entered in single digits ex: 5:5 (5 hours:5 minutes). The separator, however, must be a colon ( : ). If you prefer a different separator then you must edit the formula in Time Estimate (mins).
+
+### 45. Time Estimate (mins) (Formula Property)
+
+Formula property that converts Time Estimate (hh:mm) from text to time estimate in number of minutes.
+
+Following is the Notion formula of this property:
+
+```jsx
+let(
+  result, split(prop("Time Estimate (hh:mm)"), ":"),
+  /* Splits the "Time Estimate (hh:mm)" property into hours and minutes using ":" as the separator. */
+
+  (toNumber(at(result, 0)) * 60) + toNumber(at(result, 1))
+  /* Converts the hours (first part of the split) to minutes, adds the minutes (second part), and returns the total. */
+)
+```
+
+### 46. Deviation (min) (Formula Property)
+
+ Calculate the difference in minutes between the Time Estimate and Total Tracked Time.
+
+Following is the Notion formula of this property:
+
+```jsx
+let(
+  result, subtract(prop("Time Estimate (mins)"), prop("Total Time Tracked")),
+  /* Subtracts "Total Time Tracked" from "Time Estimate (mins)" and stores the result. */
+
+  if(
+    empty(prop("Total Time Tracked")) or empty(prop("Time Estimate (mins)")),
+    "",
+    /* If either "Total Time Tracked" or "Time Estimate (mins)" is empty, returns an empty string. */
+
+    if(
+      result > 0,
+      style(result, "b", "c", "green", "green_background"),
+      style(result, "b", "c", "red", "red_background")
+    )
+    /* If the result is positive, styles it in green with bold text. If negative, styles it in red. */
+  )
+)
+```
+
+### 47. Deviation (%) (Formula Property)
+
+Calculates the percentage deviation of the total tracked time from the time estimate.
+
+Following is the Notion formula of this property:
+
+```jsx
+let(
+  result, round(divide(toNumber(prop("Difference from Estimate")), prop("Time Estimate (mins)")) * 100) / 100,
+
+  /* Converts "Difference from Estimate" and "Time Estimate (mins)" to numbers, rounds to a whole number. */
+
+  if(
+    empty(prop("Difference from Estimate")),
+    "",
+    /* If "Difference from Estimate" is empty, returns an empty string. */
+
+    if(
+      result > 0,
+      style(result * 100 + "%", "b", "c", "green", "green_background"),
+      style(result * 100 + "%", "b", "c", "red", "red_background")
+    )
+    /* If the result is positive, shows the percentage in green with bold text. If negative, shows it in red. */
+  )
+)
+```
+
+### 48. Edited > (3 months / 6 months / 1 year) ago (Formula property)
+
+These are 3 formula properties that give a true or false output based on if the Last edited time was more than 3 months, 6 months or 1 year ago from current date. They are used for filtering in the Stalled Tasks/Projects/Goals views. The output appears as a checkbox in the database.
+
+Following are the Notion formula for these properties:
+
+```jsx
+if(
+  dateBetween(prop("Last edited time"), now(), "months") >= 3, 
+
+  /* Checks if the difference between "Last edited time" and the current time (now) is 3 months or more. */
+
+  true, 
+  false
+  /* Returns true if 3 months or more have passed, otherwise returns false. */
+)
+```
+
+```jsx
+if(
+  dateBetween(prop("Last edited time"), now(), "months") >= 6, 
+
+  /* Checks if the difference between "Last edited time" and the current time (now) is 3 months or more. */
+
+  true, 
+  false
+  /* Returns true if 6 months or more have passed, otherwise returns false. */
+)
+```
+
+```jsx
+if(
+  dateBetween(prop("Last edited time"), now(), "year") >= 1, 
+
+  /* Checks if the difference between "Last edited time" and the current time (now) is 1 year or more. */
+
+  true, 
+  false
+  /* Returns true if 1 year or more has passed, otherwise returns false. */
+)
+```
+
+### 49. Overdue (Formula property)
+
+Shows if an incomplete task is past its due date.
+
+Following is the Notion formula of this property:
+
+```jsx
+if(
+  includes(["Done", "Aborted"], prop("Status")),
+
+  /* If the "Status" is "Done" or "Aborted", return an empty string. */
+
+  "",
+
+  if(
+    empty(prop("Date")),
+    "",
+
+    /* If the "Date" property is empty, return an empty string. */
+
+    if(
+      empty(prop("Date").dateEnd()),
+
+      /* If there is no end date: */
+
+      if(
+        prop("Date").dateStart() < now(),
+        true,
+        false
+        /* If the start date is in the past, return true. Otherwise, return false. */
+      ),
+
+      /* If there is an end date: */
+
+      if(
+        prop("Date").dateEnd() < now(),
+        true,
+        false
+        /* If the end date is in the past, return true. Otherwise, return false. */
+      )
+    )
+  )
+)
+
+```
+
+### 50. Files & Media
+
+Allows adding files as attachment to any entry. For a free account, the upload size is limited to 5MB.
+
+### 51. Date Completed (Date Property)
+
+Actual date of completion of a task. Its not necessary to make this property visible, however if you make a mistake and trigger the Completed button on the wrong date then you'll need to either clear or modify the date on Completed Date property for the task, project or goal entry in question.
+
+### 52. Completed Button (Database Button property)
+
+Automatically changes the Status of a entry, ideally a goal, to Done and assigns the current date to the Date Completed property. You may use the Status property for the other stages of a goal but to calculate the deviation from the due date you will need to use this button on the actual date of completion when the Status needs to be set to Done. Setting the Status property to Done manually will not calculate the deviation. It also creates an entry with the same name in the Wins Master Database, assigns the goal property to the current entry and opens the newly created Win entry so that you can add a cover image.
+
+### 53. Date Deviation
+
+Calculates the difference between the Date Completed property and the Date Property. The result is show in 'days'. It is styled red when there's an overshoot and green otherwise. This property will need to be made visible in the linked databases you want to use it in. Following is the Notion formula for this property:
+
+```jsx
+if(
+  empty(prop("Date")) or empty(prop("Date Completed")),
+  
+  /* If either the "Date" or "Date Completed" property is empty, return an empty string. */
+
+  "",
+
+  if(
+    empty(prop("Date").dateEnd()),
+
+    /* If there is no end date: */
+
+    let(
+      result, dateBetween(prop("Date Completed"), prop("Date").dateStart(), "days"),
+
+      /* Calculates the difference in days between "Date Completed" and the start date. */
+
+      if(
+        result <= 0,
+        style(result + "d", "b", "c", "green", "green_background"),
+        style(result + "d", "b", "c", "red", "red_background")
+      )
+      /* Styles the result in green if non-positive, otherwise in red. */
+    ),
+
+    /* If there is an end date: */
+
+    let(
+      result, dateBetween(prop("Date Completed"), prop("Date").dateEnd(), "days"),
+
+      /* Calculates the difference in days between "Date Completed" and the end date. */
+
+      if(
+        result <= 0,
+        style(result + "d", "b", "c", "green", "green_background"),
+        style(result + "d", "b", "c", "red", "red_background")
+      )
+      /* Styles the result in green if non-positive, otherwise in red. */
+    )
+  )
+)
+```
+
+## Database Views
+
+The Tasks Master Database includes several pre-configured views to help manage and organize tasks, projects, and goals effectively:
+
+1. All Tasks: Shows all active tasks.
+2. All Projects: Shows all active projects.
+3. All Goals: Shows all active goals.
+4. Archived Tasks: Shows all archived tasks.
+5. Archived Projects: Shows all archived projects.
+6. Archived Goals: Shows all archived goals.
+
+## Best Practices
+
+- Regularly update the Status property to reflect the current state of tasks, projects, and goals.
+- Take advantage of the hierarchical structure to break down complex projects  and goals into manageable tasks.
+- Also use the hierarchical structure to break large task, projects and goals into sub-tasks, sub-projects and milestones.
+
+<Note>
+Subtasks have Type property 'Task'. Similarly Sub-projects have Type 'Project' and Milestones have Type 'Goal'
+</Note>
+
+<Note>
+If you create entries within the template page, make sure to check the Processed checkbox after assigning all necessary details to items, else they will appear in the inbox of their respective pages.
+</Note>
+
+- Utilize the Priority and Time-Sensitivity properties to ensure focus on the most important and urgent Projects and Goals.
+- Use the Archived property to keep the active views clutter-free without losing historical data.
+- Leverage the relations to Areas, Habits, and Notes to create a comprehensive, interconnected productivity system.
+
+# New Task Template
+
+## Overview
+
+The Task Template acts as the default template for tasks in the master database. It has a predefined structure that utilizes the full potential of all the relation properties associated with a task.
+
+## Template Structure
+
+### Details Panel
+
+All task properties are located in the Details Side Panel that can be accessed by clicking the Panel button on the top right corner of the page ("view details" alt text)  or clicking the 'View details' button below the title of the page. The Area property and Files and Media property appears separately for quick access.
+
+### New Entry Buttons
+
+Two buttons - New Subtask and New Note when clicked will create entries in relevant databases and show up in the linked databases within this template. They will be automatically linked to the current task using relevant relation properties.
+
+### Callout Block
+
+This section can be used to give a quick description of the task.
+
+### Linked Databases
+
+### → 1. Subtasks
+
+- Purpose: Shows all tasks that are children of current instance of the task template
+- Layout: Table
+- Visible Properties: Name, Processed, Status, Date & Edited
+- Filter: Type is Task, Archived is unchecked & Parent Task is current instance of Task Template
+    - Optional filter: Status
+- Sort: Ascending Date property
+- Group: None
+
+<Note>
+Subtasks have Type property 'Task'. Similarly Sub-projects have Type 'Project' and Milestones have Type 'Goal'
+</Note>
+
+<Note>
+If you create entries within the template page, make sure to check the Processed checkbox after assigning all necessary details to items, else they will appear in the inbox of their respective pages.
+</Note>
+
+### →2. Notes & Web Clips
+
+- Purpose: Shows all notes, web clips and pulled notes that are linked to current instance of the Task template
+- Views: Notes, Web Clips & Pulled Notes
+- Layout: List
+- Visible Properties: Name, [Type/URL], Processed & Created
+- Filter: URL is [empty/not empty], Archived is unchecked, Task & Root Task contains current instance of Task Template
+    - For Pulled Notes: Pulling Task contains current instance of Task Template
+- Sort: Descending Last edited time
+- Group: [None/ By Domain names in alphabetical order]
+
+# New Project Template
+
+## Overview
+
+The Project Template acts as the default template for projects in the master database. 
+
+## Template Structure
+
+### Details Side Panel
+
+All task properties are located in the Details Side Panel that can be accessed by clicking the Panel button on the top right corner of the page ("view details" alt text)  or clicking the 'View details' button below the title of the page. The Area property and Files and Media property appears separately for quick access.
+
+### New Entry Buttons
+
+Three buttons - New Task, New Note and New Sub Project when clicked will create entries in relevant databases and show up in the linked databases within this template. They will be automatically linked to the current project using relevant relation properties.
+
+### Callout Block
+
+This section can be used to give a quick description of the Project.
+
+### Linked Databases
+
+### → 1. Sub Projects & Tasks
+
+- Purpose: Shows all projects and tasks that are children of current instance of the project template
+- Views: Sub-projects & Tasks
+- Layout: Table
+- Visible Properties: Name, Status, Date, Processed & Edited
+- Filter: Type is [Project/Task], Archived is unchecked & Parent Task is current instance of Project Template
+    - Optional filter: Status & Date
+- Sort: Ascending Date property
+- Group: None
+
+### →2. Notes & Web Clips
+
+- Purpose: Shows all notes, web clips and pulled notes that are linked to current instance of the Project template
+- Views: Notes, Web clips & Pulled Notes
+- Layout: List
+- Visible Properties: Name, [Type/URL], Processed & Created
+- Filter: URL is [empty/not empty], Archived is unchecked, Task & Root Task contains current instance of Project Template
+    - For Pulled Notes: Pulling Task contains current instance of Project Template
+- Sort: Descending Last edited time
+- Group: [None/ By Domain names in alphabetical order]
+
+# New Goal Template
+
+## Overview
+
+The Goal Template acts as the default template for Goals in the master database. 
+
+## Template Structure
+
+### Details Side Panel
+
+All task properties are located in the Details Side Panel that can be accessed by clicking the Panel button on the top right corner of the page ("view details" alt text)  or clicking the 'View details' button below the title of the page. The Area property and Files and Media property appears separately for quick access.
+
+### New Entry Buttons
+
+Four buttons - New Project, New Task, New Note and New Sub Goal when clicked will create entries in relevant databases and show up in the linked databases within this template. They will be automatically linked to the current goal using relevant relation properties.
+
+### Callout Block
+
+This section can be used to give a quick description of the Project.
+
+### Linked Databases
+
+### → 1. Milestones, Projects & Tasks
+
+- Purpose: Shows all goals, projects & tasks that are children of current instance of the Goal template
+- Views: Milestones, Projects & Tasks
+- Layout: Table
+- Visible Properties: Name, Status, Date, Processed & Edited
+- Filter: Type is [Goal/Project/Task], Archived is unchecked & Parent Task contains current instance of Goal Template
+    - Optional filter: Status & Date
+- Sort: Ascending Date property
+- Group: None
+
+### →2. Notes & Web Clips
+
+- Purpose: Shows all notes, web clips and pulled notes that are linked to current instance of the Goal template
+- Views: Notes, Web Clips & Pulled Notes
+- Layout: List
+- Visible Properties: Name, [Type/URL], Processed & Created
+- Filter: URL is [empty/not empty], Archived is unchecked, Task & Root Task contains current instance of Goal Template
+    - For Pulled Notes: Pulling Task contains current instance of Goal Template
+- Sort: Descending Last edited time
+- Group: [None/ By Domain names in alphabetical order]
+
+# Tasks Page
+
+### Overview
+
+The Tasks page serves as a comprehensive dashboard for managing tasks and help you focus on execution. It utilizes multiple linked databases and views to provide a centralized hub for task management and productivity tracking.
+
+## Page Structure
+
+### New Task Button
+
+Placed on top of the page, this button lets you quickly create a new task.
+
+### Getting Things Done (Toggle Block)
+
+This section provides a visual guide for task management using the Getting Things Done (GTD) methodology. It is structured as a series of decision points and actions, presented in a multi-column layout:
+
+- Is it actionable?
+- Is the next action obvious?
+- Can you do it now in less than 2 minutes?
+- Can you delegate it?
+- Does it have a hard and specific deadline?
+
+Each question is followed by actions to take based on the answer, guiding the user through the GTD process.
+
+## →Linked Databases
+
+Tasks Page has multiple Linked Databases or Views, each designed to display Tasks in different contexts and states. They are:
+
+### 1. Task Inbox
+
+- Purpose: Shows new or unprocessed tasks
+- Layout: Table
+- Visible Properties: Name, Processed, Status, Date, GTD, Area, Parent Task, Time Estimate (hh:mm) & Created
+- Filter: Type is Task, Archived is unchecked & Processed is unchecked
+    - Optional filter: Area
+- Sort: Descending Created time
+- Group: None
+
+### → Recent
+
+- Purpose: Shows the entry that was edited most recently
+- Layout: Table
+- Visible Properties: Processed, Name, Status, Date, GTD, Area, Parent Task, Time Estimate (hh:mm) & Created
+- Filter: Type is Task, Archived is unchecked & Start date is in the past two weeks relative to current date
+    - Optional filter: Area
+- Sort: Descending Created time
+- Group: None
+
+### 2. Task Manager
+
+### → Upcoming
+
+- Purpose: Shows scheduled tasks for the current week
+- Layout: Table
+    - Visible Properties: Name, Status, Date, Parent Task, Area, Delegated to, Time Estimate (hh:mm) & Created
+- Filter: Type is Task, Archived is unchecked, Status is not Complete group & Start Date is this week relative to current day or Status is In Progress group
+    - Optional filter: Status & Area
+- Sort: Ascending Date property
+- Group: None
+
+### → Time Tracker
+
+- Purpose: Shows tasks that are currently in progress so they can be time tracked
+- Layout: Table
+- Visible Properties: Name, Status, Date, Start, End, Time Estimate (hh:mm), Total Time Tracked, Deviation (min) & Deviation (%)
+- Filter: Type is Task, Archived is unchecked, and either Status is Ongoing or Review, or GTD is Do Now
+    - Optional filter: Area
+- Sort: None
+- Group: None
+
+<Note>
+Workflow
+
+---
+
+This view is also designed for tracking time spent on tasks using dedicated properties. Here's how it works:
+
+1. **Create Work Sessions (Sub-tasks):**
+    
+    Under each main (original) task, you can break your work into smaller sessions by creating sub-tasks. To do this, click the chevron (drop-down button, arrow head or play icon) next to the task name. A line will appear beneath the task with the option to "Add sub-items." Click that, and label your session (e.g., Session 1, S1, or simply 1).
+    
+2. **Recording Time:**
+    
+    Use the **Start** and **End** buttons to log the start and end times for each session. You can repeat this process for as many sessions as needed. Make sure all sub-items stay directly under the main task, not nested within one another.
+    
+3. **Track Duration:**
+    
+    Once you record the end time, the **Time Difference** formula will automatically calculate the session's duration in minutes. The **Total Time Tracking** property then sums up the time from all sub-tasks, showing the total time spent on the main task.
+    
+4. **Time Estimate vs. Actual Time:**
+    
+    If you've entered a **Time Estimate** (ideally in the Tasks Inbox view), the system will compare it to the actual time spent. The difference, along with the percentage deviation, will be calculated.
+    
+    - **Overshoot (Underestimated Time):** If the task took longer than estimated, the difference will show in red as a negative value.
+    - **Undershoot (Overestimated Time):** If you completed the task quicker than estimated, the difference will appear in green as a positive value.
+
+> Note:
+> 
+1. While you can enter a Time Estimate for sub-items, these estimates won't be factored into the calculation. They should only be added to the original/main task.
+2. This view doesn't have sorting based on Last edited time enabled because having it so will reorder the sub-items as you edit them, which may be confusing.
+</Note>
+
+### → Kanban - (Task Inbox & Manager - Tertiary view)
+
+- Purpose: Shows tasks scheduled for the current week grouped by their status
+- Layout: Board
+- Visible Properties: Name
+- Filter: Type is Task, Archived is unchecked, Status is not Complete group & Start date is this week relative to today or Status is In Progress group.
+    - Optional filter: Area
+- Sort: Ascending Date property
+
+<Note>
+Workflow
+
+---
+
+1. When tasks are processed in the Inbox, they can stay relevant in the context of the Tasks page if their GTD is Backlog, Do Next, Delegate or Schedule. For the first three options, there are dedicated views in the Tasks Page. But if the GTD is Schedule then a Date property must be assigned before the Processed property is checked.
+2. When a task is scheduled it will appear in the Upcoming View of the Tasks Inbox & Manager database. Tasks that are simple, can have their Status can be directly set to Done using this view.
+3. For more complex tasks, the status should be first changed from Not Started to Ongoing. This will make them appear in the Time Tracker view and you may use it if you wish. Once a task is complete you can either change the status to Done if you're satisfied with your execution. 
+4. If not, you can review it by noting down changes to be made inside the page of the task. If you do not have the time to review it, then you must clear the Date property and schedule the task for review. This will make it show up in the Upcoming view. Tasks that are partially complete will be shown with a dash in the checkbox. 
+5. When you're done reviewing the execution, you must change the Status to "Revise". You must now schedule the Date when you will make the changes. This can be done in the Kanban view by opening tasks that are under Revise status group.
+6. When it is time to execute the change the task's status must be changed to Ongoing and can be Time Tracked if necessary. Alternately, a new task can be created for Review
+7. This cycle is repeated if more changes are necessary.
+8. If the task has any external dependencies, its status must be set to Parked. If the task is delegated to someone, the Status can also be set to Parked.
+9. If the task is cancelled or discontinued, its Status must be set to Aborted.
+10. If you need to bring a task out of Do Next, Delegate or Backlog views, you can uncheck the processed checkbox and it will show up in Inbox and you can reassess it. 
+</Note>
+
+### 3. Tasks to Do Next
+
+- Purpose: Shows tasks that are prioritized for immediate action as per GTD
+- Layout: List
+- Visible Properties: Name, Status & Processed
+- Filter: Type is Task, Archived is unchecked, GTD is Do Next & Status is not Done or Aborted
+    - Optional filter: Area
+- Sort: Ascending Created time
+- Group: None
+
+### 4. Delegated Tasks
+
+- Purpose: Shows tasks that have been assigned to others as per GTD
+- Layout: List
+- Visible Properties: Name, Delegated to, Date, Status & Processed
+- Filter: Type is Task, Archived is unchecked & GTD is Delegate
+    - Optional filter: Area & Date is this week relative to current date
+- Sort: Ascending Date property
+- Group: None
+
+<Note>
+All Date filters have additional customizations under the "is" drop down menu. Ranges can also be customized by selecting "is relative to today" option and then selecting "past" or "next" options.
+</Note>
+
+### 5. Tasks Backlog
+
+- Purpose: Shows tasks that are not currently active but may be addressed in the future
+- Layout: List
+- Visible Properties: Name, GTD, Status
+- Filter: Type is Task, Archived is unchecked, GTD is Backlog & Status is not Done or Aborted
+    - Optional filter: Area
+- Sort: Ascending Created time
+- Group: None
+
+### 6. Overdue Tasks
+
+- Purpose: Shows incomplete tasks that have crossed their Date
+- Layout: List
+- Visible Properties: Name, Date, Status & Edited
+- Filter: Type is Task, Archived is unchecked & Overdue is checked
+    - Optional filter: Area & Date
+- Sort: Ascending Date property
+- Group: None
+
+<Note>
+This view can be used to reschedule tasks.
+</Note>
+
+### 7. Stalled Tasks
+
+- Purpose: Shows tasks that are not progressing
+- Layout: List
+- Visible Properties: Name, Date, Status & Edited
+- Filter: Type is Task, Archived is unchecked, Status is Not Started, Parked or Revised & Edited > 6 months ago is checked
+    - Optional filter: Edited > 1 year ago & Edited > 3 months ago
+- Sort: Ascending Date property
+- Group: None
+
+### 8. Tasks Calendar
+
+- Purpose:  Shows a monthly overview view of tasks
+- Layout: Monthly Calendar
+- Visible Properties: Name
+- Filter: Type is Task and Archived in unchecked
+    - Optional filter: Status & Area
+- Sort: None
+
+### 9. All Tasks
+
+- Purpose: Displays all unarchived active tasks in the master database
+- Layout: Table
+- Visible Properties: Name, Status, Date, GTD, Area, Parent tasks, Notes, Edited & Created
+- Filter: Type is Task & Archived is unchecked
+    - Optional filter: Area & Date
+- Sort: Descending Created time
+- Group: None
+
+### → Completed Tasks
+
+- Purpose: Shows tasks that have been successfully completed
+- Layout: Gallery, No card preview & Small card size
+- Visible properties: Name
+- Filter: Type is Task, Archived is unchecked & Status is Done
+    - Optional filter: Area & Root Area
+- Sort: Descending Last edited time
+- Group: None
+
+### →Archived Tasks
+
+- Purpose: Displays all archived tasks in the master database
+- Layout: Table
+- Visible Properties: Name, Status, Date, GTD, Area, Parent tasks, Notes, Edited & Created
+- Filter: Type is Task & Archived is checked
+    - Optional filter: Area & Date
+- Sort: Descending Last edited time
+- Group: None
+
+# Projects Page
+
+## Overview
+
+The Projects page serves as a central hub for managing projects and tasks within the workspace. It utilizes the Tasks Master Database to provide various views and sections for efficient project management.
+
+## Page Structure
+
+### New Project Button
+
+Placed on top of the page, this button lets you quickly create a new task.
+
+## →Linked Databases
+
+Projects Page has multiple Linked Databases or Views, each designed to display Projects in different contexts and states. They are:
+
+### 1. Projects Inbox
+
+- Purpose: Shows new or unplanned projects
+- Layout: Table
+- Visible Properties: Name, Processed, Status, Date, Area, Parent Task, Priority, Difficulty, Time Sensitivity, Favorite & Created
+- Filter: Type is Task, Archived is unchecked & Processed is unchecked
+    - Optional filter: Area
+- Sort: Descending Created time
+- Group: None
+
+<Note>
+Remember, projects are substantial pieces of work with many tasks under them so remember and try to add a Start Date and an End Date. 
+</Note>
+
+### 2. Project Manager
+
+### →Ongoing Projects
+
+- Purpose: Shows scheduled projects for this week
+- Layout: Table
+- Visible Properties: Name, Status, Date, Parent Task, Area, Difficulty, Priority, Time Sensitivity, Favorite & Edited
+- Filter: Type is Project, Archived in unchecked, Status is not Done or Aborted and Start date is this week or past 1 week or End date is this week relative to current date or Status is In Progress group.
+    - Option filter: Area
+- Sort: Ascending Date property
+- Group: None
+
+### →Linked Sub-items
+
+- Purpose: Shows all items (sub-projects, tasks, sub-tasks) grouped under projects that are scheduled for this week
+- Layout: Table
+- Visible Properties: Name, Status, Date, Parent Task, Area, Difficulty, Priority, Time Sensitivity, Favorite & Edited
+- Filter: Type is Task, Archived is unchecked, Parent Task Type is Project, Parent Tasks Status is not Complete group & Parent Task Date is this week or past 1 week relative to current date or Parent Task Status is In Progress group
+    - Optional filter: Area
+- Sort: Ascending Date property
+- Group: By Parent Task in alphabetical order
+
+### 2. Recent Projects
+
+- Purpose: Shows projects that were scheduled for the recent past
+- Layout: List
+- Visible Properties: Name, Status & Edited
+- Filter: Type is Project, Archived is unchecked & Start Date is in the past 1 months relative to current date
+    - Optional filter: Area
+- Sort: Descending Created time
+- Group: None
+
+### 3. Favorite Projects
+
+- Purpose: Shows projects that have been marked as favorite
+- Layout: List
+- Visible Properties: Name, Status, Favorite & Edited
+- Filter: Type is Project, Archived is unchecked, Favorite is checked & Status is not Done or Aborted
+    - Optional filter: Area
+- Sort: Descending Created time
+- Group: None
+
+<Note>
+This view is ideal for viewing projects that span over multiple months.
+</Note>
+
+### 4. Critical Projects
+
+- Purpose: Shows high-priority or urgent projects
+- Layout: List
+- Visible Properties: Name, Status, Date, Difficulty & Edited
+- Filter: Type is Project, Archived is unchecked, Time-Sensitivity is Urgent, Priority is Crucial and Status is not Done, Aborted
+    - Optional filter: Area
+- Sort: Ascending Date property
+- Group: None
+
+### 5. Stalled Projects
+
+- Purpose: Shows projects that are not progressing
+- Layout: List
+- Visible Properties: Name, Status, Priority & Edited
+- Filter: Type is Project, Archived is unchecked, Status is Not Started, Parked or Revised & Edited > 6 months ago is checked or Overdue is checked
+    - Optional filter: Edited > 1 year ago & Edited > 3 months ago
+- Sort: Ascending Created time
+- Group: None
+
+### 6. Projects Calendar
+
+- Purpose:  Shows a monthly overview view of projects
+- Layout: Monthly Calendar
+- Visible Properties: Name
+- Filter: Type is Project and Archived in unchecked
+    - Optional filter: Status & Area
+- Sort: None
+
+### 7. All Projects
+
+- Purpose: Shows all projects in the Task Master Database
+- Layout: Table
+- Visible Properties: Name, Status, Date, Area, Parent Task, Priority, Time Sensitivity, Difficulty, Edited & Created
+- Filter: Type is Project and Archived is unchecked
+    - Optional Filter: Area
+- Sort: Descending Created time
+- Group: None
+
+### → Completed
+
+- Purpose: Shows all projects that have been completed successfully
+- Layout: Gallery, No card preview & Small card size
+- Visible properties: Name
+- Filter: Type is Project, Archived is unchecked & Status is Done
+    - Optional filter: Area & Root Area
+- Sort: Descending Last edited time
+- Group: None
+
+### → Archived Projects
+
+- Purpose: Shows all archived projects in the Task Master Database
+- Layout: Table
+- Visible Properties: Name, Status, Date, Area, Parent Task, Priority, Time Sensitivity, Difficulty, Edited & Created
+- Filter: Type is Project and Archived is checked
+    - Optional Filter: Area
+- Sort: Descending Last edited time
+- Group: None
+
+# Goals Page
+
+### Overview
+
+The Projects page serves as a central hub for managing goals and milestones within the Seribro. It is divided into several sections, each utilizing the Tasks Master Database in different views for planning and tracking long term and short term goals.
+
+## Page Structure
+
+### New Goal Button
+
+Placed on top of the page, this button lets you quickly create a new goal.
+
+## →Linked Databases
+
+### 1. Goals Inbox
+
+- Purpose: Shows new or unplanned goals
+- Layout: Table
+- Visible Properties: Name, Processed, Status, Date, Area, Priority, Time Sensitivity, Difficulty, Favorite & Created
+- Filter: Type is Task, Archived is unchecked & Processed is unchecked
+    - Optional filter: Area
+- Sort: Descending Created time
+- Group: None
+
+### 2. Goals Manager
+
+### → Upcoming goals
+
+- Purpose: Shows goals that have due date approaching in the current month
+- Layout: Table
+- Visible Properties: Name, Processed, Status, Date, Completed Button, Win, Priority, Time Sensitivity, Difficulty, Favorite & Edited
+- Filter: Type is Goal, Archived in unchecked, Status is not Done or Aborted and Start date is this week or past 1 month or End date is this month relative to current date or Status is In Progress group.
+    - Option filter: Area
+- Sort: Ascending Date property
+- Group: None
+
+### →Linked Sub-items
+
+- Purpose: Shows all items (milestones, projects & tasks) grouped under goals that are scheduled for this month
+- Layout: Table
+- Visible Properties: Name, Status, Date, Parent Task, Area, Difficulty, Priority, Time Sensitivity, Favorite & Edited
+- Filter: Archived is unchecked, Parent Task Type is Goal, Parent Task Status is not Complete group & Parent Task Date is this month or past 1 month relative to current date or Parent Task Status is In Progress group.
+    - Optional filter: Area
+- Sort: Ascending Date property
+- Group: By Parent Task in alphabetical order
+
+### 2. Recent Goals
+
+- Purpose: Shows goals that were scheduled for the recent past
+- Layout: List
+- Visible Properties: Name, Status & Edited
+- Filter: Type is Goal, Archived is unchecked & Start Date is in the past 3 months relative to current date
+    - Optional filter: Area
+- Sort: Descending Date property
+- Group: None
+
+### 3. Favorite Goals
+
+- Purpose: Shows goals that have been marked as favorite
+- Layout: List
+- Visible Properties: Name, Status, Favorite & Edited
+- Filter: Type is Goal, Archived is unchecked, Favorite is checked and Status is not Done or Aborted
+    - Optional filter: Area
+- Sort: Descending Created time
+- Group: None
+
+### 4. Critical Goals
+
+- Purpose: Shows high-priority or urgent goals
+- Layout: List
+- Visible Properties: Name, Status, Date, Difficulty & Edited
+- Filter: Type is Goal, Archived is unchecked, Time-Sensitivity is Urgent, Priority is Crucial and Status is not Done, Aborted
+    - Optional filter: Area
+- Sort: Ascending Date property
+- Group: None
+
+### 5. Stalled Goals
+
+- Purpose: Shows goals that are not progressing
+- Layout: List
+- Visible Properties: Name, Status, Priority & Edited
+- Filter: Type is Goal, Archived is unchecked, Status is Not Started, Parked or Revised & Edited > 6 months ago is checked or Overdue is checked
+    - Optional filter: Edited > 1 year ago & Edited > 3 months ago
+- Sort: Ascending Created time
+- Group: None
+
+### 6. Quarterly Goals
+
+- Purpose: Shows goals according to quarter years.
+- Views: It has 5 views. 4 for each quarter and 1 for the current quarter
+- Layout: Table
+- Visible Properties: Name, Status, Date, Progress, Win, Area, Favorite & Edited
+- Filter: Type is Goal, Archived is unchecked, Quarter contains (Current, Q1, Q2, Q3 or Q4)
+    - Additional filter for Q1, Q2, Q3 and Q4 views: Date is this year relative to current date
+- Sort: Ascending Date property
+- Group: By ascending Status groups. No hidden groups.
+
+### 7. All Goals
+
+- Purpose: Shows all goals in the Tasks Master Database
+- Layout: Table
+- Visible Properties: Name, Status, Date, Progress, Win, Area, Favorite & Edited
+- Filter: Type is Goal & Archived is unchecked
+    - Optional filter: Area & Root Area
+- Sort: Descending Created time
+- Group: None
+
+### →Completed Goals
+
+- Purpose: Shows all successfully completed Goals
+- Layout: Gallery, No card preview & Small card size
+- Visible Properties: Name
+- Filter: Type is Goals, Archived is unchecked & Status is Done
+    - Optional filter: Area & Root Area
+- Sort: Descending Last edited time
+- Group: None
+
+### →Archived Goals
+
+- Purpose: Shows all archived goals in the Tasks Master Database
+- Layout: Table
+- Visible Properties: Name, Status, Date, Progress, Win, Area, Favorite & Edited
+- Filter: Type is Goal & Archived is checked
+    - Optional filter: Area & Root Area
+- Sort: Descending Last edited time
+- Group: None
+
+# Conclusion
+
+The Tasks page serves as a comprehensive dashboard for managing tasks, projects, and productivity. Its layout and multiple views are designed to provide quick access to tasks in various states and contexts, facilitating efficient task management and productivity tracking. The use of the Getting Things Done methodology and various specialized views allows for a well-organized approach to handling tasks, from initial capture to completion.
+
+The Projects page serves as a comprehensive dashboard for managing projects and tasks. Its layout and multiple views are designed to provide quick access to projects in various states and contexts, facilitating efficient project management and productivity tracking. The use of various specialized views allows for a well-organized approach to handling projects, from initial capture to completion.
+
+This Goals page provides a comprehensive overview of goals using various views of the Tasks Master Database. It allows for quick access to different categories of goals, from new and unprocessed to completed, and provides quarterly breakdowns for better time management and goal tracking.

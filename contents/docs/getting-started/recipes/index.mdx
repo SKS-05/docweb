@@ -1,0 +1,164 @@
+# Recipes
+
+# Recipes Master Database
+
+### Overview
+
+The Recipes Master Database is designed to organize and manage a collection of recipes.
+
+## Database Schema
+
+### 1. Name (Title property)
+
+The name of the recipe.
+
+### 2. Cuisine (Select property)
+
+Categorizes the recipe by its culinary origin. 
+
+Options:
+
+- Contemporary
+- Indian
+- Chinese
+- Japanese
+- Korean
+- Thai
+- Arabian
+- Turkish
+
+- Greek
+- Spanish
+- French
+- Italian
+- Mexican
+- Peruvian
+- Ethiopian
+- Moroccan
+
+Add more options as you explore them.
+
+### 3. Calories (Number property)
+
+The calorie content of the recipe.
+
+### 4. Cook Time (mins) (Number property)
+
+The time required to cook the recipe, measured in minutes.
+
+### 5. Cost (Number property)
+
+The estimated cost of ingredients for the recipe. It's formatted in US Dollars.
+
+### 6. Drink (Checkbox property)
+
+Indicates whether the recipe is for a drink.
+
+### 7. Favorite (Checkbox property)
+
+Allows marking a recipe as a favorite.
+
+### 8. Archived (Checkbox property)
+
+Used to remove entries from all views without deletion. 
+
+### 9. Never cooked (Checkbox property)
+
+Description: Indicates whether the recipe has never been cooked before.
+
+### 10. Rating (Select property)
+
+Allows rating of recipes on a scale of 1 to 5 stars.
+
+### 11. Serves (Number property)
+
+The number of servings the recipe yields.
+
+### 12. Diet (Select property)
+
+Categorizes the recipe based on dietary restrictions.
+
+Options:
+
+- Pescatarian
+- Vegan
+- Vegetarian
+- Non-Vegetarian
+
+### 13. URL property
+
+A link to the recipe's source if found on a website.
+
+### 14. Tags (Multi-select property)
+
+Allows categorization of recipes using multiple tags. You can also choose the AI Autofill feature to generate new suggestions for the options.
+
+## Databases Views
+
+The Recipes Master Database includes one pre-configured view named All Recipes.
+
+# Recipes Page
+
+### Overview
+
+The page is designed to organize and display recipes using multiple views from the Recipes Master Database.
+
+# Page Structure
+
+### New Recipe Button
+
+Placed on top of the page, this button lets you quickly add a new recipe.
+
+## →Linked Databases
+
+### 1. All Recipes
+
+### →Never cooked View
+
+- Purpose: Shows recipes you have not cooked till date.
+- Layout: Gallery; Small card size, Page cover preview
+- Visible Properties: Name & Cook time
+- Filter: Never cooked is checked & Archived is unchecked
+    - Optional filter: Cuisine, Drink & Type
+- Sort: Ascending Cook time property
+- Group: None
+
+### →Cooked View
+
+- Purpose: Shows recipes you have cooked before.
+- Layout: Gallery; Small card size, Page cover preview
+- Visible Properties: Name & Rating
+- Filter: Never cooked is unchecked & Archived is unchecked
+    - Optional filter: Cuisine, Drink & Diet
+- Sort: Descending Rating property
+- Group: None
+
+### →Favorites View
+
+- Purpose: Shows your favorite recipes.
+- Layout: Gallery; Small card size, Page cover preview
+- Visible Properties: Name & Rating
+- Filter: Favorite is checked & Archived is unchecked
+    - Optional filter: Cuisine, Drink & Diet
+- Sort: Descending Rating property
+- Group: None
+
+### 2. Drinks
+
+- Purpose: Shows all drink recipes.
+- Layout: Gallery; Small card size, Page cover preview
+- Visible Properties: Name
+- Filter: Drink is checked & Archived is unchecked
+- Sort: Descending Rating property
+- Group: None
+
+### 3. By Diet
+
+- Purpose: Shows recipes based on dietary restrictions.
+- Views: Vegetarian, Non-vegetarian, Pescatarian, Vegan
+- Layout: Gallery; Small card size, Page cover preview
+- Visible Properties: Name
+- Filter: Diet is Vegetarian/Non-vegetarian/Pescatarian/Vegan, Drink is unchecked & Archived is unchecked
+    - Optional filter: Cuisine
+- Sort: Descending Rating property
+- Group: None
