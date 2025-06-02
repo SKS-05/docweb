@@ -32,9 +32,16 @@ Areadocs is a modern documentation platform built with Next.js. It features:
 - Only users with "new" status are processed when "Generate & Send Passwords" is clicked.
 
 ### 4. Algolia Search
+
 - The search bar uses Algolia DocSearch for instant, hierarchical search.
 - Search results are grouped by main topic and subtopic.
 - Clicking a result navigates to the correct documentation page.
+- The search functionality is implemented using the `AlgoliaSearch` component (`components/algolia-search.tsx`), which is integrated into the navbar (`components/navbar.tsx`).
+- Algolia is configured using the following environment variables in the `.env.local` file:
+  - `NEXT_PUBLIC_ALGOLIA_APP_ID`: Your Algolia Application ID.
+  - `NEXT_PUBLIC_ALGOLIA_INDEX_NAME`: The name of your Algolia index configured to crawl your documentation content.
+  - `NEXT_PUBLIC_ALGOLIA_SEARCH_KEY`: Your Algolia Search-only API Key.
+- The indexing of documentation content is typically handled by the Algolia DocSearch scraper or a custom build process based on your Algolia configuration, which ensures all relevant files in `contents/docs/` are indexed.
 
 ### 5. Documentation Content
 - All docs are written in MDX files under `contents/docs/`.
@@ -196,15 +203,20 @@ NEXT_PUBLIC_ALGOLIA_SEARCH_KEY=your_algolia_search_key
 
 #### A. Supabase Setup
 1. Create a new Supabase project
-2. Get your project URL and anon key
-3. Create the following tables in Supabase:
-   - `docs` table with columns:
-     - `email` (text, primary key)
-     - `password` (text)
-     - `first_login` (boolean)
-     - `email_sent` (boolean)
-     - `email_sending` (boolean)
-     - `message_id` (text)
+2. Get your project URL and anon key from your Supabase project settings (API -> Config).
+3. Create the following table in your Supabase project's SQL Editor:
+
+```sql
+create table docs (
+  email text primary key,
+  password text,
+  first_login boolean,
+  email_sent boolean,
+  email_sending boolean,
+  message_id text
+);
+```
+- This table is used to store user information, including email, password, login status, and email sending status for the password management feature.
 
 #### B. Gmail Setup for Email Service
 1. Create a Gmail account for sending emails
