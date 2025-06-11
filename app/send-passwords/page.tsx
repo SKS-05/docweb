@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabase';
 import { sendPasswordEmail, resetSentEmailsTracking, removeDeletedEmailsFromTracking } from '@/lib/email';
 import { CSVUpload } from '@/components/ui/csv-upload';
-import { Button } from '@/components/ui/button';
-import { Filter, ChevronDown, ArrowUpDown, Search, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Filter, ChevronDown, Search } from 'lucide-react';
 
 // Define types for our data
 type User = {
@@ -44,8 +43,6 @@ export default function SendPasswordsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [hasImportedUsers, setHasImportedUsers] = useState(false);
-  const [failedMessages, setFailedMessages] = useState<string[]>([]);
-  const [checkingBounces, setCheckingBounces] = useState(false);
   const [showFailedAlert, setShowFailedAlert] = useState(true);
 
   // Helper derived state
