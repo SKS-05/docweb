@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabase';
 import { sendPasswordEmail, resetSentEmailsTracking, removeDeletedEmailsFromTracking } from '@/lib/email';
@@ -46,7 +46,7 @@ export default function SendPasswordsPage() {
   const [showFailedAlert, setShowFailedAlert] = useState(true);
 
   // Helper derived state
-  const failedEmailsCount = Object.entries(emailStatus).filter(([_, status]) => status === 'failed').length;
+  const failedEmailsCount = Object.values(emailStatus).filter(status => status === 'failed').length;
 
   // Auto-dismiss the failed emails alert after 3 seconds
   useEffect(() => {
@@ -261,7 +261,7 @@ export default function SendPasswordsPage() {
   };
 
   // Check for bounced messages function
-  const checkBouncedMessages = async () => {
+  const checkBouncedMessages = useCallback(async () => {
     try {
       // Get all sent message IDs that might have failed
       const { data: sentMessages } = await supabase
@@ -313,13 +313,15 @@ export default function SendPasswordsPage() {
       } else {
         setSuccess('No bounced messages found.');
       }
-    } catch (error) {
-      console.error('Error checking bounced messages:', error);
-      setError('Failed to check for bounced messages: ' + 
-        (error instanceof Error ? error.message : 'Unknown error')
-      );
+    } catch {
+      // Remove lock in case of any error
+      await supabase
+        .from('docs')
+        .update({ email_sending: null })
+        .eq('email', email);
+      setEmailStatus(prev => ({ ...prev, [email]: 'failed' }));
     }
-  };
+  }, [emailStatus, fetchUsers, setEmailStatus, setSuccess, setError]);
 
   // Add a new useEffect to automatically check for bounced emails when the page loads
   useEffect(() => {
@@ -482,13 +484,12 @@ export default function SendPasswordsPage() {
               })
               .eq('email', user.email);
           }
-        } catch (error) {
+        } catch {
           // Remove lock in case of any error
           await supabase
             .from('docs')
             .update({ email_sending: null })
             .eq('email', user.email);
-          
           failureCount++;
           setEmailStatus(prev => ({ ...prev, [user.email]: 'failed' }));
         }
@@ -625,23 +626,18 @@ export default function SendPasswordsPage() {
             setEmailStatus(prev => ({ ...prev, [email]: 'failed' }));
             failureCount++;
             
-            // Revert password if email fails
+            // Remove lock in case of any error
             await supabase
               .from('docs')
-              .update({ 
-                password: user.password,
-                first_login: user.first_login,
-                email_sending: null
-              })
+              .update({ email_sending: null })
               .eq('email', email);
           }
-        } catch (error) {
+        } catch {
           // Remove lock in case of any error
           await supabase
             .from('docs')
             .update({ email_sending: null })
             .eq('email', email);
-          
           failureCount++;
           setEmailStatus(prev => ({ ...prev, [email]: 'failed' }));
         }
@@ -982,7 +978,7 @@ export default function SendPasswordsPage() {
               <div className="flex items-center gap-2 text-red-700">
                 <span className="text-sm">
                   {failedEmailsCount} email{failedEmailsCount !== 1 ? 's' : ''} failed to send. 
-                  Select the failed emails and click "Resend Email" to try again.
+                  Select the failed emails and click &quot;Resend Email&quot; to try again.
                 </span>
               </div>
             </div>
