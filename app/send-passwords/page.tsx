@@ -260,14 +260,6 @@ export default function SendPasswordsPage() {
     return emailRegex.test(email) && email.includes('.');
   };
 
-  // Add a new useEffect to automatically check for bounced emails when the page loads
-  useEffect(() => {
-    if (isAdmin) {
-      // Only run if admin is authenticated
-      checkBouncedMessages();
-    }
-  }, [isAdmin]);
-
   // Check for bounced messages function
   const checkBouncedMessages = async () => {
     try {
@@ -329,6 +321,14 @@ export default function SendPasswordsPage() {
     }
   };
 
+  // Add a new useEffect to automatically check for bounced emails when the page loads
+  useEffect(() => {
+    if (isAdmin) {
+      // Only run if admin is authenticated
+      checkBouncedMessages();
+    }
+  }, [isAdmin, checkBouncedMessages]);
+
   // Modify the sendPasswords function to also check for bounces before starting
   const sendPasswords = async () => {
     setLoading(true);
@@ -351,7 +351,6 @@ export default function SendPasswordsPage() {
 
       let successCount = 0;
       let failureCount = 0;
-      let skippedCount = 0;
       let invalidEmailCount = 0;
 
       // Get fresh user data to ensure we have the latest email_sent status
@@ -400,7 +399,6 @@ export default function SendPasswordsPage() {
         // Skip if email was already sent OR is currently being sent
         if (latestStatus?.email_sent === true || latestStatus?.email_sending === true) {
           console.log(`Skipping ${user.email} - email already sent or in progress`);
-          skippedCount++;
           setEmailStatus(prev => ({ ...prev, [user.email]: 'already_sent' }));
           continue;
         }
@@ -416,7 +414,6 @@ export default function SendPasswordsPage() {
         // If we couldn't set the lock, skip this user
         if (lockError) {
           console.log(`Skipping ${user.email} - couldn't acquire lock, may be concurrent send attempt`);
-          skippedCount++;
           continue;
         }
 
@@ -466,7 +463,6 @@ export default function SendPasswordsPage() {
           } else if (alreadySent) {
             // Handle already sent case
             console.log(`Email already sent to ${user.email}`);
-            skippedCount++;
             setEmailStatus(prev => ({ ...prev, [user.email]: 'already_sent' }));
           } else {
             failureCount++;
@@ -506,12 +502,9 @@ export default function SendPasswordsPage() {
       setUploadedEmails([]);
       
       // Update success message to include all counts
-      let message = [];
+      const message = [];
       if (successCount > 0) {
         message.push(`Successfully sent passwords to ${successCount} users`);
-      }
-      if (skippedCount > 0) {
-        message.push(`Skipped ${skippedCount} users who already received emails`);
       }
       if (failureCount > 0) {
         message.push(`Failed to send emails to ${failureCount} users`);
@@ -556,7 +549,6 @@ export default function SendPasswordsPage() {
     
     let successCount = 0;
     let failureCount = 0;
-    let skippedCount = 0;
     
     try {
       // Check for bounces first
@@ -627,7 +619,6 @@ export default function SendPasswordsPage() {
           } else if (alreadySent) {
             // This should not happen now since we reset tracking, but handle it just in case
             console.error(`Email still marked as already sent to ${email} despite tracking reset`);
-            skippedCount++;
             setEmailStatus(prev => ({ ...prev, [email]: 'already_sent' }));
           } else {
             console.error(`Failed to send email to ${email}:`, emailError);
@@ -693,14 +684,14 @@ export default function SendPasswordsPage() {
       }
       
       // Apply status filter
-      let statusMatch = true;
+      const statusMatch = true;
       if (filterOption !== 'all') {
         if (filterOption === 'firstlogin' && !user.first_login) return false;
         if (filterOption === 'active' && user.first_login) return false;
       }
 
       // Apply email status filter
-      let emailStatusMatch = true;
+      const emailStatusMatch = true;
       if (emailFilterOption !== 'all') {
         const status = emailStatus[user.email];
         if (emailFilterOption === 'already_sent' && status !== 'already_sent') return false;
@@ -1277,7 +1268,7 @@ export default function SendPasswordsPage() {
         )}
 
         <p className="text-sm text-muted-foreground mb-6">
-          First import users via CSV, then click "Generate & Send Passwords" to send emails. 
+          First import users via CSV, then click &quot;Generate &amp; Send Passwords&quot; to send emails. 
           Users who have already received emails will be skipped.
         </p>
 

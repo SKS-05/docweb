@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabase';
 import { PasswordInput } from '@/components/ui/password-input';
-import { cookies } from 'next/headers';
 
 // Admin email constant
 const ADMIN_EMAIL = 'sinchks94@gmail.com';

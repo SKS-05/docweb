@@ -93,11 +93,6 @@ async function verifyEmailDomain(email: string): Promise<boolean> {
 // Load previously sent emails when the server starts
 loadSentEmails();
 
-// Example password generator
-function generatePassword(): string {
-  return Math.random().toString(36).slice(-8);  // Random 8-character password
-}
-
 // Create IMAP client for checking bounces
 const imapConfig = {
   user: 'kssinchana715@gmail.com',
@@ -115,10 +110,10 @@ const failedEmails = new Set<string>();
 async function checkBouncedEmails(): Promise<Set<string>> {
   return new Promise((resolve, _reject) => {
     try {
-      // @ts-ignore - Ignoring constructor type error as it should work at runtime
+      // @ts-expect-error - Ignoring constructor type error as it should work at runtime
       const imap = new Imap(imapConfig);
       imap.once('ready', () => {
-        imap.openBox('INBOX', false, (err: any, _box: any) => {
+        imap.openBox('INBOX', false, (err: unknown, _box: unknown) => {
           if (err) {
             console.error('Error opening inbox:', err);
             imap.end();
@@ -130,7 +125,7 @@ async function checkBouncedEmails(): Promise<Set<string>> {
             ['FROM', 'Mail Delivery Subsystem'], 
             ['SINCE', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()]
           ];
-          imap.search(searchCriteria, (err: any, results: any) => {
+          imap.search(searchCriteria, (err: unknown, results: unknown) => {
             if (err) {
               console.error('Error searching emails:', err);
               imap.end();
@@ -144,8 +139,8 @@ async function checkBouncedEmails(): Promise<Set<string>> {
               return;
             }
             const f = imap.fetch(results, { bodies: '' });
-            f.on('message', (msg: any, _seqno: any) => {
-              msg.on('body', (stream: any, _info: any) => {
+            f.on('message', (msg: unknown, _seqno: unknown) => {
+              msg.on('body', (stream: unknown, _info: unknown) => {
                 // Convert to Readable stream for mailparser
                 const readableStream = stream as unknown as Readable;
                 simpleParser(readableStream)
@@ -180,7 +175,7 @@ async function checkBouncedEmails(): Promise<Set<string>> {
           });
         });
       });
-      imap.once('error', (err: any) => {
+      imap.once('error', (err: unknown) => {
         console.error('IMAP error:', err);
         resolve(failedEmails);
       });
