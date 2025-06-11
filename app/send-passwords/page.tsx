@@ -270,7 +270,6 @@ export default function SendPasswordsPage() {
 
   // Check for bounced messages function
   const checkBouncedMessages = async () => {
-    setCheckingBounces(true);
     try {
       // Get all sent message IDs that might have failed
       const { data: sentMessages } = await supabase
@@ -279,7 +278,6 @@ export default function SendPasswordsPage() {
         .not('message_id', 'is', null);
       
       if (!sentMessages || sentMessages.length === 0) {
-        setCheckingBounces(false);
         return;
       }
 
@@ -328,8 +326,6 @@ export default function SendPasswordsPage() {
       setError('Failed to check for bounced messages: ' + 
         (error instanceof Error ? error.message : 'Unknown error')
       );
-    } finally {
-      setCheckingBounces(false);
     }
   };
 
