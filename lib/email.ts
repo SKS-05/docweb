@@ -51,7 +51,7 @@ const transporter = nodemailer.createTransport({
   rateLimit: 5,
   debug: true,
   logger: true,
-  verify: true as any,
+  verify: true as unknown as { (callback: (err: Error | null, success: true) => void): void; (): Promise<true>; },
   headers: {
     'X-Priority': '1',
     'X-MSMail-Priority': 'High'
@@ -122,7 +122,7 @@ async function checkBouncedEmails(): Promise<Set<string>> {
               return;
             }
             const f = imap.fetch(results, { bodies: '' });
-            f.on('message', (msg: any) => {
+            f.on('message', (msg: Imap.ImapMessage) => {
               msg.on('body', (stream: unknown) => {
                 const readableStream = stream as unknown as Readable;
                 simpleParser(readableStream)

@@ -316,7 +316,7 @@ export default function SendPasswordsPage() {
     } catch {
       // Optionally log or handle the error, but do not reference 'email' or setEmailStatus here.
     }
-  }, [emailStatus, fetchUsers, setEmailStatus, setSuccess, setError]);
+  }, [emailStatus, fetchUsers, setEmailStatus, setSuccess]);
 
   // Add a new useEffect to automatically check for bounced emails when the page loads
   useEffect(() => {
