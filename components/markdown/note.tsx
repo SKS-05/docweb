@@ -8,8 +8,6 @@ type NoteProps = PropsWithChildren & {
 
 export default function Note({
   children,
-  title = "Note",
-  type = "note",
 }: NoteProps) {
   return (
     <div

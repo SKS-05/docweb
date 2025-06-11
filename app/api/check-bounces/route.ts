@@ -37,7 +37,7 @@ export async function GET() {
       const imap = new Imap(imapConfig);
       
       imap.once('ready', () => {
-        imap.openBox('INBOX', false, (err, _) => {
+        imap.openBox('INBOX', false, (err) => {
           if (err) {
             console.error('Error opening inbox:', err);
             imap.end();
@@ -70,8 +70,8 @@ export async function GET() {
             
             const f = imap.fetch(results, { bodies: '' });
             
-            f.on('message', (msg, _) => {
-              msg.on('body', (stream, _) => {
+            f.on('message', (msg) => {
+              msg.on('body', (stream) => {
                 // Convert node stream to readable stream
                 const readableStream = stream as unknown as Readable;
                 

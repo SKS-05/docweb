@@ -314,12 +314,7 @@ export default function SendPasswordsPage() {
         setSuccess('No bounced messages found.');
       }
     } catch {
-      // Remove lock in case of any error
-      await supabase
-        .from('docs')
-        .update({ email_sending: null })
-        .eq('email', email);
-      setEmailStatus(prev => ({ ...prev, [email]: 'failed' }));
+      // Optionally log or handle the error, but do not reference 'email' or setEmailStatus here.
     }
   }, [emailStatus, fetchUsers, setEmailStatus, setSuccess, setError]);
 

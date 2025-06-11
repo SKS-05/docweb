@@ -9,7 +9,7 @@ const Signup = () => {
     e.preventDefault();
 
     // Sign up user with Supabase authentication
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({ email, password });
 
     if (error) {
       console.error("Sign Up Error:", error.message);

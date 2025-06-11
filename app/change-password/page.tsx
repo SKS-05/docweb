@@ -85,7 +85,7 @@ export default function ChangePassword() {
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('userEmail');
       router.push('/login');
-    } catch (err) {
+    } catch {
       setError('An error occurred while changing password');
       setLoading(false);
     }
