@@ -110,10 +110,10 @@ export default function SendPasswordsPage() {
     checkAuthAndFetchUsers();
   }, [router]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     const { data: users, error: dbError } = await supabase
       .from('docs')
-      .select('email, password, first_login, email_sent')  // Add email_sent to the select
+      .select('email, password, first_login, email_sent')
       .returns<User[]>();
 
     if (dbError) {
@@ -125,7 +125,7 @@ export default function SendPasswordsPage() {
     if (users) {
       setUsers(users);
     }
-  };
+  }, [setError, setUsers]);
 
   const generateRandomPassword = () => {
     const length = 12;

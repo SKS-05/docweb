@@ -135,7 +135,7 @@ export async function GET() {
         });
       });
       
-      imap.once('error', (err) => {
+      imap.once('error', (err: Error) => {
         console.error('IMAP error:', err);
         resolve();
       });
