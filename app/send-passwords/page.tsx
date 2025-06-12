@@ -48,6 +48,23 @@ export default function SendPasswordsPage() {
   // Helper derived state
   const failedEmailsCount = Object.values(emailStatus).filter(status => status === 'failed').length;
 
+  const fetchUsers = useCallback(async () => {
+    const { data: users, error: dbError } = await supabase
+      .from('docs')
+      .select('email, password, first_login, email_sent')
+      .returns<User[]>();
+
+    if (dbError) {
+      console.error('Error fetching users:', dbError);
+      setError('Error fetching users: ' + dbError.message);
+      return;
+    }
+
+    if (users) {
+      setUsers(users);
+    }
+  }, [setError, setUsers]);
+
   // Auto-dismiss the failed emails alert after 3 seconds
   useEffect(() => {
     if (failedEmailsCount > 0) {
@@ -75,29 +92,12 @@ export default function SendPasswordsPage() {
   useEffect(() => {
     const checkAuthAndFetchUsers = async () => {
       try {
-        // Check if user is logged in and is admin
-        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        const userEmail = localStorage.getItem('userEmail');
-
-        if (!isLoggedIn || userEmail !== ADMIN_EMAIL) {
-          console.error('Not authenticated or not admin');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        if (!session) {
           router.push('/login');
           return;
         }
-
-        // Check if user exists in docs table
-        const { data: docUser, error: docError } = await supabase
-          .from('docs')
-          .select('*')
-          .eq('email', ADMIN_EMAIL)
-          .single();
-
-        if (docError || !docUser) {
-          console.error('Admin user not found:', docError);
-          router.push('/login');
-          return;
-        }
-
         setIsAdmin(true);
         await fetchUsers();
       } catch (err) {
@@ -108,24 +108,7 @@ export default function SendPasswordsPage() {
     };
 
     checkAuthAndFetchUsers();
-  }, [router]);
-
-  const fetchUsers = useCallback(async () => {
-    const { data: users, error: dbError } = await supabase
-      .from('docs')
-      .select('email, password, first_login, email_sent')
-      .returns<User[]>();
-
-    if (dbError) {
-      console.error('Error fetching users:', dbError);
-      setError('Error fetching users: ' + dbError.message);
-      return;
-    }
-
-    if (users) {
-      setUsers(users);
-    }
-  }, [setError, setUsers]);
+  }, [router, fetchUsers, setError, setIsAdmin]);
 
   const generateRandomPassword = () => {
     const length = 12;
