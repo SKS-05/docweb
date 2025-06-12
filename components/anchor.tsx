@@ -3,36 +3,39 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ComponentProps } from "react";
+import { ComponentProps, ReactNode } from "react";
 
-type AnchorProps = ComponentProps<typeof Link> & {
+interface AnchorProps {
+  href: string;
+  children: ReactNode;
+  className?: string;
   absolute?: boolean;
   activeClassName?: string;
   disabled?: boolean;
-};
+}
 
-export default function Anchor({
-  absolute,
-  className = "",
-  activeClassName = "",
-  disabled,
-  children,
-  ...props
-}: AnchorProps) {
+export default function Anchor(props: AnchorProps) {
   const path = usePathname();
-  let isMatch = absolute
-    ? props.href.toString().split("/")[1] == path.split("/")[1]
+  let isMatch = props.absolute
+    ? props.href.toString().split("/")[1] === (path?.split("/")[1] || "")
     : path === props.href;
 
   if (props.href.toString().includes("http")) isMatch = false;
 
-  if (disabled)
+  if (props.disabled)
     return (
-      <div className={cn(className, "cursor-not-allowed")}>{children}</div>
+      <div className={cn(props.className, "cursor-not-allowed")}>{props.children}</div>
     );
   return (
-    <Link className={cn(className, isMatch && activeClassName)} {...props}>
-      {children}
+    <Link
+      href={props.href}
+      className={`${
+        isMatch
+          ? "text-[#FF6B00] font-semibold"
+          : "text-gray-600 hover:text-[#FF6B00]"
+      } ${props.className || ""}`}
+    >
+      {props.children}
     </Link>
   );
 }
