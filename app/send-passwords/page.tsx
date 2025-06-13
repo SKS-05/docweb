@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabase';
 import { sendPasswordEmail, resetSentEmailsTracking, removeDeletedEmailsFromTracking } from '@/lib/email';
 import { CSVUpload } from '@/components/ui/csv-upload';
-import { Button } from '@/components/ui/button';
-import { Filter, ChevronDown, ArrowUpDown, Search, RefreshCw } from 'lucide-react';
+import { Filter, ChevronDown, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 // Define types for our data
@@ -44,8 +43,6 @@ export default function SendPasswordsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [hasImportedUsers, setHasImportedUsers] = useState(false);
-  const [failedMessages, setFailedMessages] = useState<string[]>([]);
-  const [checkingBounces, setCheckingBounces] = useState(false);
   const [showFailedAlert, setShowFailedAlert] = useState(true);
 
   // Helper derived state
@@ -211,7 +208,7 @@ export default function SendPasswordsPage() {
 
       setSuccess(`Successfully added ${newUsers.length} new users. Click "Generate & Send Passwords" to generate and send passwords.`);
     } catch (err) {
-      setError('An error occurred while importing users: ' + 
+      setError('An error occurred while importing users: ' +
         (err instanceof Error ? err.message : 'Unknown error')
       );
       setHasImportedUsers(false);
@@ -250,7 +247,7 @@ export default function SendPasswordsPage() {
         
         setSuccess('Successfully removed uploaded users.');
       } catch (err) {
-        setError('An error occurred while removing users: ' + 
+        setError('An error occurred while removing users: ' +
           (err instanceof Error ? err.message : 'Unknown error')
         );
       }
@@ -263,26 +260,20 @@ export default function SendPasswordsPage() {
     return emailRegex.test(email) && email.includes('.');
   };
 
-  // Add a new useEffect to automatically check for bounced emails when the page loads
-  useEffect(() => {
-    if (isAdmin) {
-      // Only run if admin is authenticated
-      checkBouncedMessages();
-    }
-  }, [isAdmin]);
-
   // Check for bounced messages function
-  const checkBouncedMessages = async () => {
-    setCheckingBounces(true);
+  const checkBouncedMessages = useCallback(async () => {
+    // Previous code had checkingBounces state, but it was unused. Removing for now.
+    // setLoading(true); // Don't block UI for this background check
     try {
-      // Get all sent message IDs that might have failed
+      // Get all sent message IDs from the database
       const { data: sentMessages } = await supabase
         .from('docs')
         .select('email, message_id')
+        .eq('email_sent', true)
         .not('message_id', 'is', null);
       
       if (!sentMessages || sentMessages.length === 0) {
-        setCheckingBounces(false);
+        // setCheckingBounces(false);
         return;
       }
 
@@ -326,17 +317,24 @@ export default function SendPasswordsPage() {
       } else {
         setSuccess('No bounced messages found.');
       }
-    } catch (error) {
+    } catch (error: any) { // Explicitly type error to avoid 'any' issues
       console.error('Error checking bounced messages:', error);
-      setError('Failed to check for bounced messages: ' + 
+      setError('Failed to check for bounced messages: ' +
         (error instanceof Error ? error.message : 'Unknown error')
       );
     } finally {
-      setCheckingBounces(false);
+      // setCheckingBounces(false);
     }
-  };
+  }, [emailStatus, fetchUsers, setError, setSuccess, supabase]);
 
-  // Modify the sendPasswords function to also check for bounces before starting
+  // Add a new useEffect to automatically check for bounced emails when the page loads
+  useEffect(() => {
+    if (isAdmin) {
+      // Only run if admin is authenticated
+      checkBouncedMessages();
+    }
+  }, [isAdmin, checkBouncedMessages, supabase]);
+
   const sendPasswords = async () => {
     setLoading(true);
     setError(null);
@@ -358,7 +356,7 @@ export default function SendPasswordsPage() {
 
       let successCount = 0;
       let failureCount = 0;
-      let skippedCount = 0;
+      let skippedCount = 0; // Changed back to let
       let invalidEmailCount = 0;
 
       // Get fresh user data to ensure we have the latest email_sent status
@@ -407,7 +405,7 @@ export default function SendPasswordsPage() {
         // Skip if email was already sent OR is currently being sent
         if (latestStatus?.email_sent === true || latestStatus?.email_sending === true) {
           console.log(`Skipping ${user.email} - email already sent or in progress`);
-          skippedCount++;
+          skippedCount++; // Increment skippedCount here
           setEmailStatus(prev => ({ ...prev, [user.email]: 'already_sent' }));
           continue;
         }
@@ -423,7 +421,7 @@ export default function SendPasswordsPage() {
         // If we couldn't set the lock, skip this user
         if (lockError) {
           console.log(`Skipping ${user.email} - couldn't acquire lock, may be concurrent send attempt`);
-          skippedCount++;
+          skippedCount++; // Increment skippedCount here
           continue;
         }
 
@@ -493,7 +491,7 @@ export default function SendPasswordsPage() {
               })
               .eq('email', user.email);
           }
-        } catch (error) {
+        } catch (_error: any) { // Type as any to avoid explicit typing of error
           // Remove lock in case of any error
           await supabase
             .from('docs')
@@ -513,7 +511,7 @@ export default function SendPasswordsPage() {
       setUploadedEmails([]);
       
       // Update success message to include all counts
-      let message = [];
+      const message = []; // Changed to const
       if (successCount > 0) {
         message.push(`Successfully sent passwords to ${successCount} users`);
       }
@@ -538,7 +536,7 @@ export default function SendPasswordsPage() {
       
     } catch (err) {
       console.error('Error in sendPasswords:', err);
-      setError('An error occurred while sending passwords: ' + 
+      setError('An error occurred while sending passwords: ' +
         (err instanceof Error ? err.message : 'Unknown error')
       );
     } finally {
@@ -563,7 +561,7 @@ export default function SendPasswordsPage() {
     
     let successCount = 0;
     let failureCount = 0;
-    let skippedCount = 0;
+    let skippedCount = 0; // Changed back to let
     
     try {
       // Check for bounces first
@@ -651,7 +649,7 @@ export default function SendPasswordsPage() {
               })
               .eq('email', email);
           }
-        } catch (error) {
+        } catch (_error: any) { // Type as any to avoid explicit typing of error
           // Remove lock in case of any error
           await supabase
             .from('docs')
@@ -679,11 +677,9 @@ export default function SendPasswordsPage() {
       setTimeout(checkBouncedMessages, 10000);
       
     } catch (err) {
-      setError('An error occurred while resending emails: ' + 
+      setError('An error occurred while resending emails: ' +
         (err instanceof Error ? err.message : 'Unknown error')
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -700,14 +696,14 @@ export default function SendPasswordsPage() {
       }
       
       // Apply status filter
-      let statusMatch = true;
+      const statusMatch = true; // Changed to const
       if (filterOption !== 'all') {
         if (filterOption === 'firstlogin' && !user.first_login) return false;
         if (filterOption === 'active' && user.first_login) return false;
       }
 
       // Apply email status filter
-      let emailStatusMatch = true;
+      const emailStatusMatch = true; // Changed to const
       if (emailFilterOption !== 'all') {
         const status = emailStatus[user.email];
         if (emailFilterOption === 'already_sent' && status !== 'already_sent') return false;
@@ -770,7 +766,7 @@ export default function SendPasswordsPage() {
       setSelectedUsers(new Set());
       setShowDeleteConfirm(false);
     } catch (err) {
-      setError('An error occurred while deleting users: ' + 
+      setError('An error occurred while deleting users: ' +
         (err instanceof Error ? err.message : 'Unknown error')
       );
     }
@@ -998,7 +994,7 @@ export default function SendPasswordsPage() {
               <div className="flex items-center gap-2 text-red-700">
                 <span className="text-sm">
                   {failedEmailsCount} email{failedEmailsCount !== 1 ? 's' : ''} failed to send. 
-                  Select the failed emails and click "Resend Email" to try again.
+                  Select the failed emails and click &quot;Resend Email&quot; to try again.
                 </span>
               </div>
             </div>
@@ -1248,7 +1244,7 @@ export default function SendPasswordsPage() {
             <div className="bg-card p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
               <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
               <p className="text-muted-foreground mb-4">
-                Are you sure you want to delete {selectedUsers.size} selected user{selectedUsers.size !== 1 ? 's' : ''}? This action cannot be undone.
+                Are you sure you want to delete {selectedUsers.size} user{selectedUsers.size !== 1 ? 's' : ''}? This action cannot be undone.
               </p>
               <p className="text-sm text-muted-foreground mb-2">
                 Type <span className="font-medium text-foreground">Delete</span> to confirm:
@@ -1257,7 +1253,7 @@ export default function SendPasswordsPage() {
                 type="text"
                 value={deleteConfirmText}
                 onChange={(e) => setDeleteConfirmText(e.target.value)}
-                placeholder="Type 'Delete' here"
+                placeholder="Type &quot;Delete&quot; here"
                 className="w-full px-3 py-2 border rounded-md mb-4 bg-background text-foreground placeholder:text-muted-foreground"
                 autoComplete="off"
               />
@@ -1284,7 +1280,7 @@ export default function SendPasswordsPage() {
         )}
 
         <p className="text-sm text-muted-foreground mb-6">
-          First import users via CSV, then click "Generate & Send Passwords" to send emails. 
+          First import users via CSV, then click &quot;Generate &amp; Send Passwords&quot; to send emails. 
           Users who have already received emails will be skipped.
         </p>
 

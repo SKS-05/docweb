@@ -26,7 +26,7 @@ export default function LoginPage() {
       localStorage.removeItem('userEmail');
 
       // Authenticate with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      const { data: _authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });

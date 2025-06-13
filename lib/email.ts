@@ -6,17 +6,16 @@ import dns from 'dns';
 import { promisify } from 'util';
 import type { SentMessageInfo } from 'nodemailer';
 import * as Imap from 'imap';
-import { simpleParser, ParsedMail } from 'mailparser';
+import { simpleParser } from 'mailparser';
+import 'dotenv/config';
 import { Readable } from 'stream';
 import fs from 'fs';
-require('dotenv').config();
 
 const dnsResolveMx = promisify(dns.resolveMx);
 
 // Admin email configuration
 const adminEmail = process.env.EMAIL_USER as string;
 const adminPassword = process.env.EMAIL_PASSWORD as string;
-const APP_NAME = 'AriaAuth';
 
 // Initialize in-memory tracking for sent emails
 let sentEmails = new Set<string>();
@@ -27,7 +26,7 @@ const loadSentEmails = () => {
     const data = fs.readFileSync('sentEmails.json', 'utf8');
     const parsedData = JSON.parse(data);
     sentEmails = new Set(parsedData);
-  } catch (error) {
+  } catch (_error) {
     console.log('No previous sent emails found, starting fresh.');
   }
 };
@@ -60,7 +59,7 @@ const transporter = nodemailer.createTransport({
   debug: true,
   logger: true,
   // Add verification settings
-  verify: true as any, // Type assertion to fix verify property type
+  // verify: true,
   headers: {
     'X-Priority': '1',
     'X-MSMail-Priority': 'High'
@@ -68,7 +67,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // Verify the connection configuration
-transporter.verify((error, success) => {
+transporter.verify((error, _success) => {
   if (error) {
     console.error('SMTP connection error:', error);
   } else {
@@ -152,14 +151,14 @@ const failedEmails = new Set<string>();
 
 // Function to check for bounce messages in inbox
 async function checkBouncedEmails(): Promise<Set<string>> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, _reject) => {
     try {
       // Create a new instance of Imap with the provided config
-      // @ts-ignore - Ignoring constructor type error as it should work at runtime
+      // @ts-expect-error - Ignoring constructor type error as it should work at runtime (previously @ts-ignore)
       const imap = new Imap(imapConfig);
       
       imap.once('ready', () => {
-        imap.openBox('INBOX', false, (err: any, box: any) => {
+        imap.openBox('INBOX', false, (err: Error | null, _box: unknown) => {
           if (err) {
             console.error('Error opening inbox:', err);
             imap.end();
@@ -173,7 +172,7 @@ async function checkBouncedEmails(): Promise<Set<string>> {
             ['SINCE', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()]
           ];
           
-          imap.search(searchCriteria, (err: any, results: any) => {
+          imap.search(searchCriteria, (err: Error | null, results: string[]) => {
             if (err) {
               console.error('Error searching emails:', err);
               imap.end();
@@ -190,8 +189,8 @@ async function checkBouncedEmails(): Promise<Set<string>> {
             
             const f = imap.fetch(results, { bodies: '' });
             
-            f.on('message', (msg: any, seqno: any) => {
-              msg.on('body', (stream: any, info: any) => {
+            f.on('message', (msg: Imap.ImapMessage, _seqno: number) => {
+              msg.on('body', (stream: Readable, _info: { size: number, type: string }) => {
                 // Convert to Readable stream for mailparser
                 const readableStream = stream as unknown as Readable;
                 
@@ -204,7 +203,9 @@ async function checkBouncedEmails(): Promise<Set<string>> {
                     if ((subject.includes('Delivery Status Notification') || subject.includes('Mail delivery failed')) 
                         && text.includes('550')) {
                       // Extract failed email address
-                      const emailMatches = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
+                      const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+                      const emailMatches = text.match(emailRegex);
+                      
                       if (emailMatches) {
                         emailMatches.forEach(email => {
                           if (email !== 'kssinchana715@gmail.com') {
@@ -230,9 +231,13 @@ async function checkBouncedEmails(): Promise<Set<string>> {
         });
       });
       
-      imap.once('error', (err: any) => {
+      imap.once('error', (err: Error) => {
         console.error('IMAP error:', err);
         resolve(failedEmails);
+      });
+      
+      imap.once('end', () => {
+        console.log('IMAP connection ended');
       });
       
       imap.connect();
@@ -254,8 +259,8 @@ setInterval(async () => {
   console.log('Scheduled bounce check found', failedEmails.size, 'failed emails');
 }, 5 * 60 * 1000);
 
-export const sendPasswordEmail = async (toEmail: string, password: string): Promise<{ 
-  success: boolean; 
+export const sendPasswordEmail = async (toEmail: string, password: string): Promise<{
+  success: boolean;
   error?: string;
   messageId?: string;
   alreadySent?: boolean;  // Add this flag to indicate already sent status
@@ -264,9 +269,9 @@ export const sendPasswordEmail = async (toEmail: string, password: string): Prom
     // Check if this email has previously bounced
     if (failedEmails.has(toEmail)) {
       console.log('Email was previously marked as bounced:', toEmail);
-      return { 
-        success: false, 
-        error: `Email address ${toEmail} previously failed delivery` 
+      return {
+        success: false,
+        error: `Email address ${toEmail} previously failed delivery`
       };
     }
 
@@ -274,9 +279,9 @@ export const sendPasswordEmail = async (toEmail: string, password: string): Prom
     const isValidDomain = await verifyEmailDomain(toEmail);
     if (!isValidDomain) {
       console.error('Invalid email domain:', toEmail);
-      return { 
-        success: false, 
-        error: 'Invalid email domain or domain does not accept emails' 
+      return {
+        success: false,
+        error: 'Invalid email domain or domain does not accept emails'
       };
     }
 
@@ -286,8 +291,8 @@ export const sendPasswordEmail = async (toEmail: string, password: string): Prom
     // Check if email has already been sent
     if (sentEmails.has(toEmail)) {
       console.log(`Email already sent to: ${toEmail}`);
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: "Email already sent to this address",
         alreadySent: true  // Set flag for UI to display "Already Sent" instead of "Failed"
       };
@@ -296,9 +301,9 @@ export const sendPasswordEmail = async (toEmail: string, password: string): Prom
     // Validate email format
     if (!validateEmail(toEmail)) {
       console.error(`Invalid email format: ${toEmail}`);
-      return { 
-        success: false, 
-        error: "Invalid email format" 
+      return {
+        success: false,
+        error: "Invalid email format"
       };
     }
 

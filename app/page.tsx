@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [_isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
