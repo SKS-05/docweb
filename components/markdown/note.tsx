@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import clsx from "clsx";
 import { PropsWithChildren } from "react";
 
 type NoteProps = PropsWithChildren & {
@@ -8,6 +9,8 @@ type NoteProps = PropsWithChildren & {
 
 export default function Note({
   children,
+  title = "Note",
+  type = "note",
 }: NoteProps) {
   return (
     <div

@@ -3,6 +3,8 @@ import { ThemeProvider } from "@/components/contexts/theme-provider";
 import { AuthProvider } from "@/components/contexts/auth-provider";
 import { Navbar } from "@/components/navbar";
 import { Space_Mono, Space_Grotesk } from "next/font/google";
+import { Providers } from "./providers";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "@/styles/globals.css";
 
 const sansFont = Space_Grotesk({

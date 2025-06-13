@@ -1,88 +1,81 @@
 const { createClient } = require('@supabase/supabase-js')
+require('dotenv').config({ path: '.env.local' })
 
-const supabaseUrl = 'https://baprkcpydygrxvcvoogg.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhcHJrY3B5ZHlncnh2Y3Zvb2dnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI4ODU4NzgsImV4cCI6MjA1ODQ2MTg3OH0.Dr2Lsu0Gh-rltskeclh-_i0HpAhtS8f_xJ39LjWU-Mc'
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY // Use service role key
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-const OLD_ADMIN_EMAIL = 'kssinchana715@gmail.com'
-const NEW_ADMIN_EMAIL = 'sinchks94@gmail.com'
-const ADMIN_PASSWORD = 'newpassword'
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL
+const ADMIN_PASSWORD = process.env.ADMIN_INITIAL_PASSWORD
 
 async function updateAdmin() {
   try {
     console.log('Updating admin account...')
 
-    // Step 1: Check if old admin exists
-    const { data: oldAdmin, error: oldAdminError } = await supabase
-      .from('docs')
-      .select('*')
-      .eq('email', OLD_ADMIN_EMAIL)
-      .single()
+    // Attempt to get user by email from Supabase auth.users
+    const { data: users, error: listError } = await supabase.auth.admin.listUsers()
 
-    if (oldAdminError) {
-      console.error('Error finding old admin:', oldAdminError.message)
+    if (listError) {
+      console.error('Error listing users:', listError.message)
       return
     }
 
-    if (!oldAdmin) {
-      console.error('Old admin account not found')
-      return
-    }
+    const existingAdminUser = users.users.find(user => user.email === ADMIN_EMAIL)
 
-    // Step 2: Check if new admin already exists
-    const { data: existingNewAdmin, error: checkError } = await supabase
-      .from('docs')
-      .select('*')
-      .eq('email', NEW_ADMIN_EMAIL)
-      .single()
-
-    if (existingNewAdmin) {
-      // Update existing new admin record
-      const { error: updateError } = await supabase
-        .from('docs')
-        .update({
+    if (existingAdminUser) {
+      // Update existing user (e.g., password or user metadata)
+      const { data: updatedUser, error: updateAuthError } = await supabase.auth.admin.updateUserById(
+        existingAdminUser.id,
+        {
           password: ADMIN_PASSWORD,
-          first_login: false
-        })
-        .eq('email', NEW_ADMIN_EMAIL)
+          email_confirm: true, // Auto-confirm email for admin
+        }
+      )
 
-      if (updateError) {
-        console.error('Error updating new admin:', updateError.message)
+      if (updateAuthError) {
+        console.error('Error updating admin user in auth:', updateAuthError.message)
         return
       }
+      console.log('Admin user updated in Supabase Auth:', updatedUser.user.email)
+
     } else {
-      // Create new admin record
-      const { error: insertError } = await supabase
-        .from('docs')
-        .insert([{
-          email: NEW_ADMIN_EMAIL,
-          password: ADMIN_PASSWORD,
-          first_login: false
-        }])
+      // Create new user in Supabase Auth
+      const { data: newUser, error: createAuthError } = await supabase.auth.admin.createUser({
+        email: ADMIN_EMAIL,
+        password: ADMIN_PASSWORD,
+        email_confirm: true, // Auto-confirm email for admin
+      })
 
-      if (insertError) {
-        console.error('Error creating new admin:', insertError.message)
+      if (createAuthError) {
+        console.error('Error creating admin user in auth:', createAuthError.message)
         return
       }
+      console.log('Admin user created in Supabase Auth:', newUser.user.email)
     }
 
-    // Step 3: Delete old admin if different from new admin
-    if (OLD_ADMIN_EMAIL !== NEW_ADMIN_EMAIL) {
-      const { error: deleteError } = await supabase
-        .from('docs')
-        .delete()
-        .eq('email', OLD_ADMIN_EMAIL)
+    // Ensure the admin entry exists in the 'docs' table and update it.
+    // This table is for additional user metadata, not primary authentication.
+    const { error: upsertDocsError } = await supabase
+      .from('docs')
+      .upsert(
+        {
+          email: ADMIN_EMAIL,
+          password: ADMIN_PASSWORD, // This password here is just for direct lookup in your app, will be ignored by auth.signInWithPassword
+          first_login: false, // Assuming admin doesn't need first_login flow after this script
+        },
+        { onConflict: 'email' } // Update if email conflicts
+      )
 
-      if (deleteError) {
-        console.error('Error deleting old admin:', deleteError.message)
-        return
-      }
+    if (upsertDocsError) {
+      console.error('Error upserting admin in docs table:', upsertDocsError.message)
+      return
     }
+    console.log('Admin details upserted in docs table.')
 
-    console.log('Admin update complete!')
-    console.log('New admin email:', NEW_ADMIN_EMAIL)
-    console.log('Password:', ADMIN_PASSWORD)
+    console.log('Admin setup complete!')
+    console.log('New admin email:', ADMIN_EMAIL)
+    console.log('Password set to:', ADMIN_PASSWORD) // For your reference, should be ADMIN_INITIAL_PASSWORD
 
   } catch (err) {
     console.error('Unexpected error:', err)

@@ -6,7 +6,7 @@ import supabase from '@/lib/supabase';
 import { PasswordInput } from '@/components/ui/password-input';
 
 // Admin email constant
-const ADMIN_EMAIL = 'sinchks94@gmail.com';
+const ADMIN_EMAIL = 'kssinchana715@gmail.com';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,24 +25,30 @@ export default function LoginPage() {
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('userEmail');
 
-      // Check if user exists in docs table and verify password
-      const { data: docUser, error: docError } = await supabase
-        .from('docs')
-        .select('*')
-        .eq('email', email)
-        .single();
+      // Authenticate with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      if (docError || !docUser) {
+      if (authError) {
         setError('Invalid email or password');
         setLoading(false);
         return;
       }
 
-      // Check if password matches
-      if (docUser.password !== password) {
-        setError('Invalid email or password');
-        setLoading(false);
-        return;
+      // After successful auth, fetch user metadata from docs table
+      const { data: docUser, error: docError } = await supabase
+        .from('docs')
+        .select('first_login') // Only select first_login if that's all you need
+        .eq('email', email)
+        .single();
+
+      if (docError || !docUser) {
+        // This case might happen if a user is in auth.users but not in docs table
+        // Consider handling this by creating an entry in docs table if necessary.
+        console.error('User metadata not found in docs table:', docError?.message);
+        // For now, proceed with general login, but this indicates a data inconsistency.
       }
 
       // Store login state in localStorage and cookie
@@ -53,14 +59,15 @@ export default function LoginPage() {
       // Redirect based on user type and first_login status
       if (email === ADMIN_EMAIL) {
         router.push('/send-passwords');
-      } else if (docUser.first_login) {
+      } else if (docUser?.first_login) {
         router.push('/change-password');
       } else {
         router.push('/');
       }
 
-    } catch {
+    } catch (err) {
       setError('An error occurred during login');
+      console.error('Login error:', err);
       setLoading(false);
     }
   };

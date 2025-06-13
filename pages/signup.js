@@ -1,7 +1,7 @@
 import { useState } from "react";
 import supabase from "../lib/supabase";
 
-const Signup = () => {
+const signup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -9,7 +9,7 @@ const Signup = () => {
     e.preventDefault();
 
     // Sign up user with Supabase authentication
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email, password });
 
     if (error) {
       console.error("Sign Up Error:", error.message);
@@ -35,4 +35,4 @@ const Signup = () => {
   );
 };
 
-export default Signup;
+export default signup;

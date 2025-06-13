@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabase';
 import { sendPasswordEmail, resetSentEmailsTracking, removeDeletedEmailsFromTracking } from '@/lib/email';
 import { CSVUpload } from '@/components/ui/csv-upload';
+import { Button } from '@/components/ui/button';
+import { Filter, ChevronDown, ArrowUpDown, Search, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Filter, ChevronDown, Search } from 'lucide-react';
 
 // Define types for our data
 type User = {
@@ -14,11 +15,10 @@ type User = {
   password: string;
   first_login: boolean;
   email_sent?: boolean;  // Add this field to track email status
-  email_sending?: boolean; // Add this field to track if email is currently being sent
 };
 
 // Admin email constant
-const ADMIN_EMAIL = 'sinchks94@gmail.com';
+const ADMIN_EMAIL = 'kssinchana715@gmail.com';
 
 type FilterOption = 'firstlogin' | 'active' | 'all';
 type EmailFilterOption = 'already_sent' | 'sent' | 'failed' | 'processing' | 'new' | 'all';
@@ -30,7 +30,6 @@ export default function SendPasswordsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [isChecking, setIsChecking] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [emailStatus, setEmailStatus] = useState<{[key: string]: EmailStatus}>({});
   const [importLoading, setImportLoading] = useState(false);
@@ -45,50 +44,12 @@ export default function SendPasswordsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [hasImportedUsers, setHasImportedUsers] = useState(false);
+  const [failedMessages, setFailedMessages] = useState<string[]>([]);
+  const [checkingBounces, setCheckingBounces] = useState(false);
   const [showFailedAlert, setShowFailedAlert] = useState(true);
 
   // Helper derived state
-  const failedEmailsCount = Object.values(emailStatus).filter(status => status === 'failed').length;
-
-  const fetchUsers = useCallback(async () => {
-    console.log("Fetching users from Supabase...");
-    const { data: users, error: dbError } = await supabase
-      .from('docs')
-      .select('email, password, first_login, email_sent')
-      .returns<User[]>();
-
-    if (dbError) {
-      console.error('Error fetching users:', dbError.message);
-      setError('Error fetching users: ' + dbError.message);
-      return;
-    }
-
-    if (users) {
-      console.log(`Found ${users.length} users in database.`);
-      setUsers(users);
-      // Initialize email status for fetched users
-      const initialEmailStatus: {[key: string]: EmailStatus} = {};
-      users.forEach(user => {
-        if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-          // Admin user should not have an email status related to sending passwords
-          return;
-        }
-
-        if (user.email_sent) {
-          initialEmailStatus[user.email] = 'sent'; // Correctly mark as 'sent'
-        } else if (user.email_sending) {
-          initialEmailStatus[user.email] = 'processing'; // Mark as 'processing' if in progress
-        } else if (user.password !== null && user.password !== '') {
-          // If email_sent is false but password exists, it means a previous send attempt failed
-          initialEmailStatus[user.email] = 'failed';
-        } else {
-          // Default to 'new' for truly new entries without a password or email_sent status
-          initialEmailStatus[user.email] = 'new';
-        }
-      });
-      setEmailStatus(initialEmailStatus);
-    }
-  }, [setError, setUsers]);
+  const failedEmailsCount = Object.entries(emailStatus).filter(([_, status]) => status === 'failed').length;
 
   // Auto-dismiss the failed emails alert after 3 seconds
   useEffect(() => {
@@ -114,27 +75,60 @@ export default function SendPasswordsPage() {
     }
   }, [error, success]);
 
-  // Main useEffect for initial page load and admin check
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    const userEmail = localStorage.getItem('userEmail');
-    
-    const initializePage = async () => {
-      console.log("Initializing page, checking admin status...");
-      if (isLoggedIn && userEmail === ADMIN_EMAIL) {
+    const checkAuthAndFetchUsers = async () => {
+      try {
+        // Check if user is logged in and is admin
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        const userEmail = localStorage.getItem('userEmail');
+
+        if (!isLoggedIn || userEmail !== ADMIN_EMAIL) {
+          console.error('Not authenticated or not admin');
+          router.push('/login');
+          return;
+        }
+
+        // Check if user exists in docs table
+        const { data: docUser, error: docError } = await supabase
+          .from('docs')
+          .select('*')
+          .eq('email', ADMIN_EMAIL)
+          .single();
+
+        if (docError || !docUser) {
+          console.error('Admin user not found:', docError);
+          router.push('/login');
+          return;
+        }
+
         setIsAdmin(true);
-        console.log("Admin authenticated. Fetching users...");
-        await fetchUsers(); // Ensure fetchUsers is awaited
-      } else {
-        console.log("Not authorized as admin, redirecting to login.");
+        await fetchUsers();
+      } catch (err) {
+        console.error('Error in checkAuthAndFetchUsers:', err);
+        setError('An error occurred: ' + (err instanceof Error ? err.message : 'Unknown error'));
         router.push('/login');
       }
-      setIsChecking(false);
-      console.log("Page initialization complete.");
     };
 
-    initializePage();
-  }, [router, fetchUsers, setIsAdmin, setIsChecking]);
+    checkAuthAndFetchUsers();
+  }, [router]);
+
+  const fetchUsers = async () => {
+    const { data: users, error: dbError } = await supabase
+      .from('docs')
+      .select('email, password, first_login, email_sent')  // Add email_sent to the select
+      .returns<User[]>();
+
+    if (dbError) {
+      console.error('Error fetching users:', dbError);
+      setError('Error fetching users: ' + dbError.message);
+      return;
+    }
+
+    if (users) {
+      setUsers(users);
+    }
+  };
 
   const generateRandomPassword = () => {
     const length = 12;
@@ -158,21 +152,13 @@ export default function SendPasswordsPage() {
     setImportLoading(true);
     setError(null);
     setSuccess(null);
-    console.log("handleCSVUpload: Processing CSV file with", emails.length, "emails.");
     
     try {
       // Get all existing users
-      console.log("handleCSVUpload: Checking for existing users in DB...");
-      const { data: existingUsers, error: existingUsersError } = await supabase
+      const { data: existingUsers } = await supabase
         .from('docs')
         .select('email')
         .in('email', emails.map(email => email.toLowerCase()));
-
-      if (existingUsersError) {
-        console.error('handleCSVUpload: Error fetching existing users:', existingUsersError.message);
-        throw existingUsersError;
-      }
-      console.log(`handleCSVUpload: Found ${existingUsers ? existingUsers.length : 0} existing users.`);
 
       // Fix type error and filter out existing emails
       const existingEmails = new Set(
@@ -183,22 +169,19 @@ export default function SendPasswordsPage() {
         !existingEmails.has(email.toLowerCase()) && 
         email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()
       );
-      console.log(`handleCSVUpload: Identified ${newEmails.length} new emails after filtering.`);
 
       if (newEmails.length === 0) {
         setSuccess('No new email addresses to add.');
         setImportLoading(false);
-        console.log("handleCSVUpload: No new email addresses to add.");
         return;
       }
 
       // Store uploaded emails for potential cancellation
       setUploadedEmails(newEmails);
       setHasImportedUsers(true);
-      console.log("handleCSVUpload: Stored uploaded emails for cancellation.");
 
       // Add new users with generated passwords but don't send emails
-      const newUsersToInsert = newEmails.map(email => ({
+      const newUsers = newEmails.map(email => ({
         email,
         password: '', // Leave password empty until Generate & Send is clicked
         first_login: true,
@@ -206,100 +189,91 @@ export default function SendPasswordsPage() {
       }));
 
       // Insert new users into the database
-      console.log("handleCSVUpload: Inserting new users into DB...");
       const { error: insertError } = await supabase
         .from('docs')
-        .insert(newUsersToInsert);
+        .insert(newUsers);
 
       if (insertError) {
-        console.error('handleCSVUpload: Error adding new users:', insertError.message);
         setError('Error adding new users: ' + insertError.message);
         setImportLoading(false);
         return;
       }
-      console.log(`handleCSVUpload: Successfully inserted ${newUsersToInsert.length} new users.`);
 
-      // Set email status for new emails to 'new' in UI
+      // Set email status for new emails to 'new'
       const updatedEmailStatus = { ...emailStatus };
       newEmails.forEach(email => {
         updatedEmailStatus[email] = 'new';
       });
       setEmailStatus(updatedEmailStatus);
-      console.log("handleCSVUpload: Updated UI email statuses to 'new'.");
 
-      // Refresh user list from DB
-      console.log("handleCSVUpload: Refreshing user list after insert...");
+      // Refresh user list
       await fetchUsers();
 
-      setSuccess(`Successfully added ${newUsersToInsert.length} new users. Click "Generate & Send Passwords" to generate and send passwords.`);
-      console.log("handleCSVUpload: Success message set.");
+      setSuccess(`Successfully added ${newUsers.length} new users. Click "Generate & Send Passwords" to generate and send passwords.`);
     } catch (err) {
-      console.error('handleCSVUpload: An error occurred:', err instanceof Error ? err.message : 'Unknown error');
       setError('An error occurred while importing users: ' + 
         (err instanceof Error ? err.message : 'Unknown error')
       );
       setHasImportedUsers(false);
     } finally {
       setImportLoading(false);
-      console.log("handleCSVUpload: Import loading set to false.");
     }
   };
 
   const handleCancelUpload = async () => {
-    if (uploadedEmails.length === 0) {
-      setSuccess("No uploaded emails to cancel.");
-      return;
-    }
-    console.log("handleCancelUpload: Cancelling upload for", uploadedEmails.length, "emails.");
-    try {
-      // Remove the uploaded users from the database
-      console.log("handleCancelUpload: Deleting uploaded users from DB...");
-      const { error: deleteError } = await supabase
-        .from('docs')
-        .delete()
-        .in('email', uploadedEmails);
+    if (uploadedEmails.length > 0) {
+      try {
+        // Remove the uploaded users from the database
+        const { error: deleteError } = await supabase
+          .from('docs')
+          .delete()
+          .in('email', uploadedEmails);
 
-      if (deleteError) {
-        console.error('handleCancelUpload: Error removing uploaded users:', deleteError.message);
-        setError('Error removing uploaded users: ' + deleteError.message);
-        return;
+        if (deleteError) {
+          setError('Error removing uploaded users: ' + deleteError.message);
+          return;
+        }
+
+        // Clear email status for the canceled uploads
+        const updatedEmailStatus = { ...emailStatus };
+        uploadedEmails.forEach(email => {
+          delete updatedEmailStatus[email];
+        });
+        setEmailStatus(updatedEmailStatus);
+
+        // Clear the uploaded emails
+        setUploadedEmails([]);
+        setHasImportedUsers(false);
+        
+        // Refresh the user list
+        await fetchUsers();
+        
+        setSuccess('Successfully removed uploaded users.');
+      } catch (err) {
+        setError('An error occurred while removing users: ' + 
+          (err instanceof Error ? err.message : 'Unknown error')
+        );
       }
-      console.log("handleCancelUpload: Successfully deleted uploaded users from DB.");
-
-      // Clear email status for the canceled uploads
-      const updatedEmailStatus = { ...emailStatus };
-      uploadedEmails.forEach(email => {
-        delete updatedEmailStatus[email];
-      });
-      setEmailStatus(updatedEmailStatus);
-      console.log("handleCancelUpload: Cleared UI email statuses for cancelled upload.");
-
-      // Clear the uploaded emails
-      setUploadedEmails([]);
-      setHasImportedUsers(false);
-      
-      // Refresh the user list
-      console.log("handleCancelUpload: Refreshing user list after cancellation...");
-      await fetchUsers();
-      
-      setSuccess('Successfully removed uploaded users.');
-      console.log("handleCancelUpload: Success message set for cancellation.");
-    } catch (err) {
-      console.error('handleCancelUpload: An error occurred:', err instanceof Error ? err.message : 'Unknown error');
-      setError('An error occurred while removing users: ' + 
-        (err instanceof Error ? err.message : 'Unknown error')
-      );
     }
   };
 
   const isValidEmail = (email: string) => {
-    // Temporarily simplified for debugging syntax error
-    return typeof email === 'string' && email.includes('@') && email.includes('.');
+    // RFC 5322 compliant email regex
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    return emailRegex.test(email) && email.includes('.');
   };
 
+  // Add a new useEffect to automatically check for bounced emails when the page loads
+  useEffect(() => {
+    if (isAdmin) {
+      // Only run if admin is authenticated
+      checkBouncedMessages();
+    }
+  }, [isAdmin]);
+
   // Check for bounced messages function
-  const checkBouncedMessages = useCallback(async () => {
-    console.log("checkBouncedMessages: Checking for bounced emails...");
+  const checkBouncedMessages = async () => {
+    setCheckingBounces(true);
     try {
       // Get all sent message IDs that might have failed
       const { data: sentMessages } = await supabase
@@ -308,12 +282,11 @@ export default function SendPasswordsPage() {
         .not('message_id', 'is', null);
       
       if (!sentMessages || sentMessages.length === 0) {
-        console.log("checkBouncedMessages: No sent messages with IDs to check.");
+        setCheckingBounces(false);
         return;
       }
 
       // Check for bounce notifications in admin inbox
-      console.log("checkBouncedMessages: Calling API to check for bounces...");
       const response = await fetch('/api/check-bounces', {
         method: 'GET',
         headers: {
@@ -322,23 +295,20 @@ export default function SendPasswordsPage() {
       });
 
       if (!response.ok) {
-        console.error('checkBouncedMessages: Failed to check bounced messages via API.');
         throw new Error('Failed to check bounced messages');
       }
 
       const { bouncedEmails } = await response.json();
-      console.log("checkBouncedMessages: API returned bounced emails:", bouncedEmails);
       
       // Mark emails as failed in the UI
       if (bouncedEmails && bouncedEmails.length > 0) {
         const newEmailStatus = { ...emailStatus };
         
         for (const email of bouncedEmails) {
-          console.log('checkBouncedMessages: Marking as failed:', email);
+          console.log('Marking as failed:', email);
           newEmailStatus[email] = 'failed';
           
           // Also update the database
-          console.log("checkBouncedMessages: Updating DB for bounced email:", email);
           await supabase
             .from('docs')
             .update({ 
@@ -352,37 +322,28 @@ export default function SendPasswordsPage() {
         setSuccess(`Found ${bouncedEmails.length} bounced emails and marked them as failed.`);
         
         // Refresh users
-        console.log("checkBouncedMessages: Refreshing user list after bounce check.");
         await fetchUsers();
       } else {
         setSuccess('No bounced messages found.');
-        console.log("checkBouncedMessages: No bounced messages found.");
       }
-    } catch (err) {
-      console.error('checkBouncedMessages: An error occurred:', err instanceof Error ? err.message : 'Unknown error');
-      // Optionally log or handle the error, but do not reference 'email' or setEmailStatus here.
+    } catch (error) {
+      console.error('Error checking bounced messages:', error);
+      setError('Failed to check for bounced messages: ' + 
+        (error instanceof Error ? error.message : 'Unknown error')
+      );
+    } finally {
+      setCheckingBounces(false);
     }
-  }, [emailStatus, fetchUsers, setEmailStatus, setSuccess]);
-
-  // Add a new useEffect to automatically check for bounced emails when the page loads
-  useEffect(() => {
-    if (isAdmin) {
-      // Only run if admin is authenticated
-      console.log("useEffect: Admin is authenticated, checking for bounced messages on load.");
-      checkBouncedMessages();
-    }
-  }, [isAdmin, checkBouncedMessages]);
+  };
 
   // Modify the sendPasswords function to also check for bounces before starting
   const sendPasswords = async () => {
     setLoading(true);
     setError(null);
     setSuccess(null);
-    console.log("sendPasswords: Initiating password send process.");
     
     try {
       // Check for bounces first to ensure we have the latest status
-      console.log("sendPasswords: Running pre-send bounce check.");
       await checkBouncedMessages();
 
       // Check if still logged in and is admin
@@ -392,26 +353,23 @@ export default function SendPasswordsPage() {
       if (!isLoggedIn || userEmail !== ADMIN_EMAIL) {
         setError('Unauthorized. Please log in again.');
         router.push('/login');
-        console.error("sendPasswords: Unauthorized access detected.");
         return;
       }
 
       let successCount = 0;
       let failureCount = 0;
+      let skippedCount = 0;
       let invalidEmailCount = 0;
 
       // Get fresh user data to ensure we have the latest email_sent status
-      console.log("sendPasswords: Fetching fresh user data...");
       const { data: currentUsers, error: fetchError } = await supabase
         .from('docs')
         .select('email, password, first_login, email_sent')
         .returns<User[]>();
 
       if (fetchError) {
-        console.error('sendPasswords: Failed to fetch current user data:', fetchError.message);
         throw new Error('Failed to fetch current user data');
       }
-      console.log(`sendPasswords: Got ${currentUsers ? currentUsers.length : 0} current users.`);
 
       // Only update 'new' users to 'processing', leave others as is
       setEmailStatus(prev => {
@@ -426,30 +384,20 @@ export default function SendPasswordsPage() {
         });
         return updated;
       });
-      console.log("sendPasswords: Marked 'new' emails as 'processing' in UI.");
 
       for (const user of currentUsers || []) {
         // Skip admin user
         if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) continue;
-        // Skip if already sent or marked as already sent
-        if (
-          emailStatus[user.email] === 'sent' ||
-          emailStatus[user.email] === 'already_sent'
-        ) {
-          console.log(`sendPasswords: Skipping ${user.email} - already sent or marked as already sent.`);
-          continue;
-        }
         // DO NOT delete or clear the status here. Let it transition naturally.
         // Validate email format
         if (!isValidEmail(user.email)) {
-          console.error(`sendPasswords: Invalid email format: ${user.email}`);
+          console.error(`Invalid email format: ${user.email}`);
           invalidEmailCount++;
           setEmailStatus(prev => ({ ...prev, [user.email]: 'failed' }));
           continue;
         }
 
         // CRITICAL CHECK: Get the very latest status from database to prevent duplicate sends
-        console.log(`sendPasswords: Checking latest status for ${user.email} in DB.`);
         const { data: latestStatus } = await supabase
           .from('docs')
           .select('email_sent, email_sending')
@@ -458,13 +406,13 @@ export default function SendPasswordsPage() {
         
         // Skip if email was already sent OR is currently being sent
         if (latestStatus?.email_sent === true || latestStatus?.email_sending === true) {
-          console.log(`sendPasswords: Skipping ${user.email} - email already sent or in progress in DB.`);
+          console.log(`Skipping ${user.email} - email already sent or in progress`);
+          skippedCount++;
           setEmailStatus(prev => ({ ...prev, [user.email]: 'already_sent' }));
           continue;
         }
 
         // Set a lock before sending email - use a transaction if possible for better atomicity
-        console.log(`sendPasswords: Attempting to acquire lock for ${user.email}.`);
         const { error: lockError } = await supabase
           .from('docs')
           .update({ email_sending: true })
@@ -474,10 +422,10 @@ export default function SendPasswordsPage() {
 
         // If we couldn't set the lock, skip this user
         if (lockError) {
-          console.log(`sendPasswords: Skipping ${user.email} - couldn't acquire lock (error: ${lockError.message}), may be concurrent send attempt.`);
+          console.log(`Skipping ${user.email} - couldn't acquire lock, may be concurrent send attempt`);
+          skippedCount++;
           continue;
         }
-        console.log(`sendPasswords: Lock acquired for ${user.email}. Generating password and sending email.`);
 
         try {
           // Generate a random password
@@ -493,7 +441,7 @@ export default function SendPasswordsPage() {
             .eq('email', user.email);
 
           if (updateError) {
-            console.error(`sendPasswords: Error updating password for ${user.email}:`, updateError.message);
+            console.error(`Error updating password for ${user.email}:`, updateError);
             failureCount++;
             setEmailStatus(prev => ({ ...prev, [user.email]: 'failed' }));
             
@@ -511,75 +459,66 @@ export default function SendPasswordsPage() {
           
           if (success) {
             // Store the messageId for tracking and mark as sent
-            console.log(`sendPasswords: Email sent successfully to ${user.email}. Attempting to update DB.`);
-            const { error: updateSentError } = await supabase
+            await supabase
               .from('docs')
-              .update({
+              .update({ 
                 email_sent: true,
+                email_sending: null,
                 message_id: messageId // Store message ID for tracking
               })
               .eq('email', user.email);
 
-            if (updateSentError) {
-              console.error(`sendPasswords: Error updating email_sent status for ${user.email}:`, updateSentError.message);
-              failureCount++; // Treat as a failure if we can't persist the sent status
-              setEmailStatus(prev => ({ ...prev, [user.email]: 'failed' }));
-            } else {
-              console.log(`sendPasswords: Successfully updated email_sent status for ${user.email} in DB.`);
-              successCount++;
-              setEmailStatus(prev => ({ ...prev, [user.email]: 'sent' }));
-            }
-            // Always clear email_sending after attempt, regardless of success/failure of email_sent update
-            await supabase
-              .from('docs')
-              .update({ email_sending: null })
-              .eq('email', user.email);
+            successCount++;
+            setEmailStatus(prev => ({ ...prev, [user.email]: 'sent' }));
           } else if (alreadySent) {
             // Handle already sent case
-            console.log(`sendPasswords: Email already sent to ${user.email} (reported by email service).`);
+            console.log(`Email already sent to ${user.email}`);
+            skippedCount++;
             setEmailStatus(prev => ({ ...prev, [user.email]: 'already_sent' }));
           } else {
             failureCount++;
             setEmailStatus(prev => ({ ...prev, [user.email]: 'failed' }));
             
             // Log the specific error
-            console.error(`sendPasswords: Failed to send email to ${user.email}:`, emailError);
+            console.error(`Failed to send email to ${user.email}:`, emailError);
             
-            // DO NOT revert the password. Keep it generated.
-            console.log(`sendPasswords: Marking ${user.email} as failed in DB.`);
+            // Revert the password update and remove lock since email failed
             await supabase
               .from('docs')
               .update({ 
+                password: user.password,
+                first_login: user.first_login,
                 email_sending: null,
                 email_sent: false // Ensure it's marked as not sent
               })
               .eq('email', user.email);
           }
-        } catch (innerErr) {
-          console.error('sendPasswords: Error during send/update for', user.email, ':', innerErr instanceof Error ? innerErr.message : 'Unknown error');
+        } catch (error) {
           // Remove lock in case of any error
           await supabase
             .from('docs')
             .update({ email_sending: null })
             .eq('email', user.email);
+          
           failureCount++;
           setEmailStatus(prev => ({ ...prev, [user.email]: 'failed' }));
         }
       }
 
       // Refresh the user list to get updated statuses
-      console.log("sendPasswords: Refreshing user list after all sends processed.");
       await fetchUsers();
 
       // After successful sending, reset the upload state
       setShouldResetUpload(true);
       setUploadedEmails([]);
-      console.log("sendPasswords: Upload state reset.");
       
       // Update success message to include all counts
-      const message = [];
+      let message = [];
       if (successCount > 0) {
         message.push(`Successfully sent passwords to ${successCount} users`);
+      }
+      if (skippedCount > 0) {
+        message.push(`Skipped ${skippedCount} users who already received emails`);
       }
       if (failureCount > 0) {
         message.push(`Failed to send emails to ${failureCount} users`);
@@ -595,11 +534,10 @@ export default function SendPasswordsPage() {
       }
 
       // Check for bounces again after sending to catch any new bounces
-      console.log("sendPasswords: Scheduling post-send bounce check.");
       setTimeout(checkBouncedMessages, 10000); // Check for bounces 10 seconds after sending
       
     } catch (err) {
-      console.error('sendPasswords: Top-level error in sendPasswords:', err instanceof Error ? err.message : 'Unknown error');
+      console.error('Error in sendPasswords:', err);
       setError('An error occurred while sending passwords: ' + 
         (err instanceof Error ? err.message : 'Unknown error')
       );
@@ -609,7 +547,6 @@ export default function SendPasswordsPage() {
       setTimeout(() => {
         setShouldResetUpload(false);
       }, 100);
-      console.log("sendPasswords: Loading state set to false.");
     }
   };
 
@@ -617,21 +554,19 @@ export default function SendPasswordsPage() {
   const handleResendEmails = async () => {
     if (selectedUsers.size === 0) {
       setError('No users selected for resending');
-      console.warn("handleResendEmails: No users selected.");
       return;
     }
 
     setLoading(true);
     setSuccess(null);
     setError(null);
-    console.log("handleResendEmails: Initiating resend process for", selectedUsers.size, "users.");
     
     let successCount = 0;
     let failureCount = 0;
+    let skippedCount = 0;
     
     try {
       // Check for bounces first
-      console.log("handleResendEmails: Running pre-resend bounce check.");
       await checkBouncedMessages();
       
       // Set all selected emails to 'processing' status
@@ -641,21 +576,15 @@ export default function SendPasswordsPage() {
       }, {} as {[key: string]: EmailStatus});
       
       setEmailStatus(prev => ({...prev, ...processingStatus}));
-      console.log("handleResendEmails: Marked selected emails as 'processing' in UI.");
       
       for (const email of selectedUsers) {
         const user = users.find(u => u.email === email);
-        if (!user) {
-          console.warn(`handleResendEmails: User ${email} not found in current user list.`);
-          continue;
-        }
+        if (!user) continue;
 
         // Reset the email tracking to allow resending to this email
-        console.log(`handleResendEmails: Resetting sent email tracking for ${email}.`);
         await resetSentEmailsTracking(email);
 
         // Set a lock before sending email
-        console.log(`handleResendEmails: Attempting to acquire lock for ${email}.`);
         const { error: lockError } = await supabase
           .from('docs')
           .update({ email_sending: true })
@@ -663,10 +592,9 @@ export default function SendPasswordsPage() {
           .is('email_sending', null);
 
         if (lockError) {
-          console.error(`handleResendEmails: Skipping ${email} - couldn't acquire lock (error: ${lockError.message}), may be concurrent send attempt.`);
+          console.error(`Skipping ${email} - concurrent send attempt`);
           continue;
         }
-        console.log(`handleResendEmails: Lock acquired for ${email}. Generating password and resending email.`);
 
         try {
           const newPassword = generateRandomPassword();
@@ -677,12 +605,12 @@ export default function SendPasswordsPage() {
             .update({ 
               password: newPassword,
               first_login: true,
-              email_sent: false // Ensure it's marked as not sent for resend
+              email_sent: false
             })
             .eq('email', email);
 
           if (updateError) {
-            console.error(`handleResendEmails: Error updating password for ${email}:`, updateError.message);
+            console.error(`Error updating password for ${email}:`, updateError);
             setEmailStatus(prev => ({ ...prev, [email]: 'failed' }));
             failureCount++;
             continue;
@@ -692,70 +620,49 @@ export default function SendPasswordsPage() {
           const { success, error: emailError, messageId, alreadySent } = await sendPasswordEmail(email, newPassword);
           
           if (success) {
-            console.log(`handleResendEmails: Email resent successfully to ${email}. Attempting to update DB.`);
-            const { error: updateSentError } = await supabase
+            await supabase
               .from('docs')
-              .update({
+              .update({ 
                 email_sent: true,
+                email_sending: null,
                 message_id: messageId // Store message ID for tracking
               })
               .eq('email', email);
 
-            if (updateSentError) {
-              console.error(`handleResendEmails: Error updating email_sent status for ${email}:`, updateSentError.message);
-              failureCount++; // Treat as a failure if we can't persist the sent status
-              setEmailStatus(prev => ({ ...prev, [email]: 'failed' }));
-            } else {
-              console.log(`handleResendEmails: Successfully updated email_sent status for ${email} in DB.`);
-              successCount++;
-              setEmailStatus(prev => ({ ...prev, [email]: 'sent' }));
-            }
-            // Always clear email_sending after attempt, regardless of success/failure of email_sent update
-            await supabase
-              .from('docs')
-              .update({ email_sending: null })
-              .eq('email', email);
+            successCount++;
+            setEmailStatus(prev => ({ ...prev, [email]: 'sent' }));
           } else if (alreadySent) {
             // This should not happen now since we reset tracking, but handle it just in case
-            console.error(`handleResendEmails: Email still marked as already sent to ${email} despite tracking reset.`);
+            console.error(`Email still marked as already sent to ${email} despite tracking reset`);
+            skippedCount++;
             setEmailStatus(prev => ({ ...prev, [email]: 'already_sent' }));
           } else {
-            console.error(`handleResendEmails: Failed to send email to ${email}:`, emailError);
+            console.error(`Failed to send email to ${email}:`, emailError);
             setEmailStatus(prev => ({ ...prev, [email]: 'failed' }));
             failureCount++;
             
-            // Ensure email_sent is false and email_sending is null in DB
-            console.log(`handleResendEmails: Marking ${email} as failed in DB.`);
-            const { error: updateFailedError } = await supabase
-              .from('docs')
-              .update({
-                email_sent: false // Ensure it's marked as not sent
-              })
-              .eq('email', email);
-
-            if (updateFailedError) {
-              console.error(`handleResendEmails: Error updating failed email status for ${email}:`, updateFailedError.message);
-            }
-
-            // Always clear email_sending after attempt
+            // Revert password if email fails
             await supabase
               .from('docs')
-              .update({ email_sending: null })
+              .update({ 
+                password: user.password,
+                first_login: user.first_login,
+                email_sending: null
+              })
               .eq('email', email);
           }
-        } catch (innerErr) {
-          console.error('handleResendEmails: Error during resend/update for', email, ':', innerErr instanceof Error ? innerErr.message : 'Unknown error');
+        } catch (error) {
           // Remove lock in case of any error
           await supabase
             .from('docs')
             .update({ email_sending: null })
             .eq('email', email);
+          
           failureCount++;
           setEmailStatus(prev => ({ ...prev, [email]: 'failed' }));
         }
       }
 
-      console.log("handleResendEmails: Refreshing user list after resend process.");
       await fetchUsers();
       
       if (successCount > 0 && failureCount > 0) {
@@ -767,20 +674,16 @@ export default function SendPasswordsPage() {
       }
       
       setSelectedUsers(new Set());
-      console.log("handleResendEmails: Selected users cleared.");
       
       // Check for bounces after sending
-      console.log("handleResendEmails: Scheduling post-resend bounce check.");
       setTimeout(checkBouncedMessages, 10000);
       
     } catch (err) {
-      console.error('handleResendEmails: Top-level error in resendEmails:', err instanceof Error ? err.message : 'Unknown error');
       setError('An error occurred while resending emails: ' + 
         (err instanceof Error ? err.message : 'Unknown error')
       );
     } finally {
       setLoading(false);
-      console.log("handleResendEmails: Loading state set to false.");
     }
   };
 
@@ -797,14 +700,14 @@ export default function SendPasswordsPage() {
       }
       
       // Apply status filter
-      const statusMatch = true;
+      let statusMatch = true;
       if (filterOption !== 'all') {
         if (filterOption === 'firstlogin' && !user.first_login) return false;
         if (filterOption === 'active' && user.first_login) return false;
       }
 
       // Apply email status filter
-      const emailStatusMatch = true;
+      let emailStatusMatch = true;
       if (emailFilterOption !== 'all') {
         const status = emailStatus[user.email];
         if (emailFilterOption === 'already_sent' && status !== 'already_sent') return false;
@@ -835,53 +738,38 @@ export default function SendPasswordsPage() {
       newSelected.add(email);
     }
     setSelectedUsers(newSelected);
-    console.log("handleSelectUser: Selected users updated. Current selection size:", newSelected.size);
   };
 
   const handleSelectAll = () => {
     if (selectedUsers.size === sortedAndFilteredUsers.length) {
       setSelectedUsers(new Set());
-      console.log("handleSelectAll: All users deselected.");
     } else {
       setSelectedUsers(new Set(sortedAndFilteredUsers.map(user => user.email)));
-      console.log("handleSelectAll: All filtered users selected. Total:", sortedAndFilteredUsers.length);
     }
   };
 
   const handleDeleteUsers = async () => {
-    if (selectedUsers.size === 0) {
-      setError("No users selected for deletion.");
-      console.warn("handleDeleteUsers: No users selected for deletion.");
-      return;
-    }
-    console.log("handleDeleteUsers: Initiating delete for", selectedUsers.size, "users.");
     try {
       const emailsToDelete = Array.from(selectedUsers);
       
-      console.log("handleDeleteUsers: Deleting users from DB...");
       const { error: deleteError } = await supabase
         .from('docs')
         .delete()
         .in('email', emailsToDelete);
 
       if (deleteError) {
-        console.error('handleDeleteUsers: Error deleting users:', deleteError.message);
         setError('Error deleting users: ' + deleteError.message);
         return;
       }
 
       // Remove deleted emails from tracking to ensure they can receive emails if re-added
-      console.log("handleDeleteUsers: Removing deleted emails from tracking sets.");
       await removeDeletedEmailsFromTracking(emailsToDelete);
 
-      console.log("handleDeleteUsers: Refreshing user list after deletion.");
       await fetchUsers();
       setSuccess(`Successfully deleted ${selectedUsers.size} users`);
       setSelectedUsers(new Set());
       setShowDeleteConfirm(false);
-      console.log("handleDeleteUsers: Success message and state reset.");
     } catch (err) {
-      console.error('handleDeleteUsers: An error occurred:', err instanceof Error ? err.message : 'Unknown error');
       setError('An error occurred while deleting users: ' + 
         (err instanceof Error ? err.message : 'Unknown error')
       );
@@ -914,16 +802,12 @@ export default function SendPasswordsPage() {
   }, [showDeleteConfirm]);
 
   // Show loading state while checking admin status
-  if (isChecking) {
+  if (!isAdmin) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-lg">Loading...</div>
       </div>
     );
-  }
-
-  if (!isAdmin) {
-    return null;
   }
 
   return (
@@ -1033,11 +917,11 @@ export default function SendPasswordsPage() {
           <div className="flex gap-2">
             <button
               onClick={sendPasswords}
-              disabled={loading || !hasImportedUsers || !users.some(user => user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase() && !user.email_sent)}
+              disabled={loading || !hasImportedUsers || !users.some(user => !user.email_sent)}
               className="bg-primary text-primary-foreground py-2 px-4 rounded-lg hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed h-10 whitespace-nowrap"
               title={!hasImportedUsers ? "Import users from CSV first" :
-                     !users.some(user => user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase() && !user.email_sent) ? "All eligible users have already received emails" :
-                     "Generate and send passwords to new or un-sent users"}
+                     !users.some(user => !user.email_sent) ? "All users have already received emails" :
+                     "Generate and send passwords to new users"}
             >
               {loading ? 'Processing...' : 'Generate & Send Passwords'}
             </button>
@@ -1114,7 +998,7 @@ export default function SendPasswordsPage() {
               <div className="flex items-center gap-2 text-red-700">
                 <span className="text-sm">
                   {failedEmailsCount} email{failedEmailsCount !== 1 ? 's' : ''} failed to send. 
-                  Select the failed emails and click &quot;Resend Email&quot; to try again.
+                  Select the failed emails and click "Resend Email" to try again.
                 </span>
               </div>
             </div>
@@ -1364,7 +1248,7 @@ export default function SendPasswordsPage() {
             <div className="bg-card p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
               <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
               <p className="text-muted-foreground mb-4">
-                Are you sure you want to delete {selectedUsers.size} user{selectedUsers.size !== 1 ? 's' : ''}? This action cannot be undone.
+                Are you sure you want to delete {selectedUsers.size} selected user{selectedUsers.size !== 1 ? 's' : ''}? This action cannot be undone.
               </p>
               <p className="text-sm text-muted-foreground mb-2">
                 Type <span className="font-medium text-foreground">Delete</span> to confirm:
@@ -1418,4 +1302,4 @@ export default function SendPasswordsPage() {
       </div>
     </div>
   );
-}
+} 

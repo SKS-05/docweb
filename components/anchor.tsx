@@ -3,39 +3,36 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ReactNode } from "react";
+import { ComponentProps } from "react";
 
-interface AnchorProps {
-  href: string;
-  children: ReactNode;
-  className?: string;
+type AnchorProps = ComponentProps<typeof Link> & {
   absolute?: boolean;
   activeClassName?: string;
   disabled?: boolean;
-}
+};
 
-export default function Anchor(props: AnchorProps) {
+export default function Anchor({
+  absolute,
+  className = "",
+  activeClassName = "",
+  disabled,
+  children,
+  ...props
+}: AnchorProps) {
   const path = usePathname();
-  let isMatch = props.absolute
-    ? props.href.toString().split("/")[1] === (path?.split("/")[1] || "")
+  let isMatch = absolute
+    ? props.href.toString().split("/")[1] == path.split("/")[1]
     : path === props.href;
 
   if (props.href.toString().includes("http")) isMatch = false;
 
-  if (props.disabled)
+  if (disabled)
     return (
-      <div className={cn(props.className, "cursor-not-allowed")}>{props.children}</div>
+      <div className={cn(className, "cursor-not-allowed")}>{children}</div>
     );
   return (
-    <Link
-      href={props.href}
-      className={`${
-        isMatch
-          ? "text-[#FF6B00] font-semibold"
-          : "text-gray-600 hover:text-[#FF6B00]"
-      } ${props.className || ""}`}
-    >
-      {props.children}
+    <Link className={cn(className, isMatch && activeClassName)} {...props}>
+      {children}
     </Link>
   );
 }

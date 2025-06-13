@@ -72,7 +72,7 @@ export function Navbar() {
 
           {isLoggedIn ? (
             <div className="flex items-center gap-4">
-              {userEmail === 'sinchks94@gmail.com' && pathname === '/' && (
+              {userEmail === 'kssinchana715@gmail.com' && pathname === '/' && (
                 <Link
                   href="/send-passwords"
                   className={buttonVariants({
