@@ -12,8 +12,12 @@ import fs from 'fs';
 
 const dnsResolveMx = promisify(dns.resolveMx);
 
-const adminEmail = 'sinchks94@gmail.com';
-const adminPassword = 'wxey mngw cnwa lcso';
+const adminEmail = process.env.GMAIL_USER;
+const adminPassword = process.env.GMAIL_APP_PASSWORD;
+
+if (!adminEmail || !adminPassword) {
+  throw new Error("Missing GMAIL_USER or GMAIL_APP_PASSWORD environment variables");
+}
 
 let sentEmails = new Set<string>();
 
@@ -60,7 +64,7 @@ const transporter = nodemailer.createTransport({
 
 transporter.verify((error) => {
   if (error) {
-    console.error('SMTP connection error:', error);
+    console.error('SMTP connection error:', error.message);
   } else {
     console.log('SMTP server is ready to send messages');
   }
@@ -69,11 +73,18 @@ transporter.verify((error) => {
 async function verifyEmailDomain(email: string): Promise<boolean> {
   try {
     const domain = email.split('@')[1];
-    if (!domain) return false;
+    if (!domain) {
+      console.warn(`verifyEmailDomain: No domain found for email: ${email}`);
+      return false;
+    }
     const mxRecords = await dnsResolveMx(domain);
-    return mxRecords.length > 0;
-  } catch {
-    console.error('Domain verification failed');
+    if (mxRecords.length === 0) {
+      console.warn(`verifyEmailDomain: No MX records found for domain: ${domain}`);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('verifyEmailDomain: Error verifying domain for', email, ':', err instanceof Error ? err.message : 'Unknown error');
     return false;
   }
 }
@@ -99,7 +110,7 @@ async function checkBouncedEmails(): Promise<Set<string>> {
       imap.once('ready', () => {
         imap.openBox('INBOX', false, (err: unknown) => {
           if (err) {
-            console.error('Error opening inbox:', err);
+            console.error('checkBouncedEmails: Error opening inbox:', err instanceof Error ? err.message : 'Unknown error');
             imap.end();
             resolve(failedEmails);
             return;
@@ -131,37 +142,37 @@ async function checkBouncedEmails(): Promise<Set<string>> {
                     const text = parsed.text || '';
                     if ((subject.includes('Delivery Status Notification') || subject.includes('Mail delivery failed')) &&
                       text.includes('550')) {
-                      const emailMatches = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
+                      const emailMatches = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g);
                       if (emailMatches) {
                         emailMatches.forEach(email => {
-                          if (email !== 'kssinchana715@gmail.com') {
-                            console.log('Found bounced email:', email);
+                          if (email !== imapConfig.user) {
+                            console.log('checkBouncedEmails: Found bounced email:', email);
                             failedEmails.add(email);
                           }
                         });
                       }
                     }
                   })
-                  .catch(() => {
-                    console.error('Error parsing message');
+                  .catch((parseErr) => {
+                    console.error('checkBouncedEmails: Error parsing message:', parseErr instanceof Error ? parseErr.message : 'Unknown error');
                   });
               });
             });
             f.once('end', () => {
-              console.log('Finished checking bounce messages, found', failedEmails.size, 'failed emails');
+              console.log('checkBouncedEmails: Finished checking bounce messages, found', failedEmails.size, 'failed emails');
               imap.end();
               resolve(failedEmails);
             });
           });
         });
       });
-      imap.once('error', () => {
-        console.error('IMAP error');
+      imap.once('error', (imapErr: unknown) => {
+        console.error('checkBouncedEmails: IMAP error:', imapErr instanceof Error ? imapErr.message : 'Unknown error');
         resolve(failedEmails);
       });
       imap.connect();
-    } catch {
-      console.error('Error in checkBouncedEmails');
+    } catch (err) {
+      console.error('checkBouncedEmails: Error in main try block:', err instanceof Error ? err.message : 'Unknown error');
       resolve(failedEmails);
     }
   });
@@ -193,7 +204,7 @@ export const sendPasswordEmail = async (toEmail: string, password: string): Prom
 
     const isValidDomain = await verifyEmailDomain(toEmail);
     if (!isValidDomain) {
-      console.error('Invalid email domain:', toEmail);
+      console.error('sendPasswordEmail: Invalid email domain or domain does not accept emails:', toEmail);
       return {
         success: false,
         error: 'Invalid email domain or domain does not accept emails'
@@ -247,7 +258,7 @@ export const sendPasswordEmail = async (toEmail: string, password: string): Prom
     const sendMailPromise = new Promise<SentMessageInfo>((resolve, reject) => {
       transporter.sendMail(mailOptions, (err, info) => {
         if (err) {
-          console.error('Send error:', err);
+          console.error('sendPasswordEmail: Send error for', toEmail, ':', err.message);
           reject(err);
           return;
         }
@@ -260,14 +271,14 @@ export const sendPasswordEmail = async (toEmail: string, password: string): Prom
         });
 
         if (info.rejected?.length > 0) {
-          reject(new Error(`Delivery immediately rejected: ${info.response}`));
+          reject(new Error(`Delivery immediately rejected for ${toEmail}: ${info.response}`));
           return;
         }
 
         if (info.accepted?.length > 0) {
           resolve(info);
         } else {
-          reject(new Error('No recipients were accepted'));
+          reject(new Error(`No recipients were accepted for ${toEmail}`));
         }
       });
     });
@@ -282,6 +293,7 @@ export const sendPasswordEmail = async (toEmail: string, password: string): Prom
         await checkBouncedEmails();
 
         if (failedEmails.has(toEmail)) {
+          console.error('sendPasswordEmail: Email address was detected as invalid in bounce messages after sending:', toEmail);
           return {
             success: false,
             error: `Email address ${toEmail} was detected as invalid in bounce messages`,
@@ -294,15 +306,16 @@ export const sendPasswordEmail = async (toEmail: string, password: string): Prom
         success: true,
         messageId: info.messageId
       };
-    } catch {
+    } catch (sendError) {
+      console.error('sendPasswordEmail: Failed to deliver email to', toEmail, ':', sendError instanceof Error ? sendError.message : 'Unknown error');
       return {
         success: false,
         error: `Failed to deliver email to ${toEmail}`
       };
     }
 
-  } catch {
-    console.error('Error in email sending process');
+  } catch (outerErr) {
+    console.error('sendPasswordEmail: Top-level error in email sending process for', toEmail, ':', outerErr instanceof Error ? outerErr.message : 'Unknown error');
     return {
       success: false,
       error: `Failed to send email to ${toEmail}`
@@ -323,16 +336,16 @@ export const resetSentEmailsTracking = async (specificEmail?: string): Promise<b
   try {
     if (specificEmail) {
       sentEmails.delete(specificEmail);
-      console.log(`Removed ${specificEmail} from sent emails tracking`);
+      console.log(`resetSentEmailsTracking: Removed ${specificEmail} from sent emails tracking`);
     } else {
       sentEmails = new Set<string>();
-      console.log('Reset all sent emails tracking');
+      console.log('resetSentEmailsTracking: Reset all sent emails tracking');
     }
 
     saveSentEmails();
     return true;
-  } catch {
-    console.error('Error resetting sent emails tracking');
+  } catch (err) {
+    console.error('resetSentEmailsTracking: Error resetting sent emails tracking:', err instanceof Error ? err.message : 'Unknown error');
     return false;
   }
 };
@@ -352,13 +365,13 @@ export const removeDeletedEmailsFromTracking = async (deletedEmails: string[]): 
     }
 
     if (removedCount > 0) {
-      console.log(`Removed ${removedCount} deleted emails from tracking`);
+      console.log(`removeDeletedEmailsFromTracking: Removed ${removedCount} deleted emails from tracking`);
       saveSentEmails();
     }
 
     return true;
-  } catch {
-    console.error('Error removing deleted emails from tracking');
+  } catch (err) {
+    console.error('removeDeletedEmailsFromTracking: Error removing deleted emails from tracking:', err instanceof Error ? err.message : 'Unknown error');
     return false;
   }
 };
